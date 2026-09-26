@@ -91,13 +91,6 @@
   .brand { display: flex; align-items: center; flex-shrink: 0; color: var(--ds-color-brand-medium-reverse); }
   .brand svg { display: block; height: 23px; width: auto; }
 
-  .nav-links { display: flex; align-items: center; gap: 24px; }
-  .nav-links a {
-    font-size: 15px; font-weight: 500; color: var(--ds-color-text-primary);
-    transition: color .2s;
-  }
-  .nav-links a:hover { color: var(--ds-color-brand-medium-reverse); }
-
   .header-right { display: flex; align-items: center; gap: 12px; }
 
   /* 通用按钮基础 */
@@ -162,24 +155,6 @@
     background: var(--ds-color-bg-surface-raised); color: var(--ds-color-text-primary);
     box-shadow: 0 1px 3px rgba(0,0,0,.08);
   }
-
-  /* 汉堡按钮（移动端） */
-  .hamburger {
-    display: none; align-items: center; justify-content: center; width: 40px; height: 40px;
-    border: none; background: transparent; color: var(--ds-color-text-primary); cursor: pointer;
-  }
-  .mobile-menu {
-    display: none; flex-direction: column; margin-top: 8px; padding: 8px 16px 16px;
-    background: var(--ds-color-bg-overlay, #fff); border: 1px solid var(--ds-color-border-default);
-    border-radius: var(--ds-radius-panel); box-shadow: 0 12px 32px rgba(0,0,0,.10);
-  }
-  :root { --ds-color-bg-overlay: #fff; }
-  .mobile-menu a {
-    display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--ds-color-border-divider);
-    font-size: 18px; font-weight: 500; color: var(--ds-color-text-primary);
-  }
-  .mobile-menu a:last-of-type { border-bottom: none; }
-  .mobile-menu .locale-toggle { align-self: flex-start; margin-top: 12px; }
 
   /* ==================== 主区 / Hero ==================== */
   main { display: flex; flex-direction: column; width: 100%; }
@@ -266,27 +241,6 @@
   /* 主 CTA 按钮 */
   .hero-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px; width: 100%; }
 
-  /* 链接输出面板（生成链接后显示） */
-  .output {
-    display: none; width: 100%; padding: 20px 22px; text-align: center;
-    background: var(--ds-color-bg-surface-1); border: 1px solid var(--ds-color-border-subtle);
-    border-radius: var(--ds-radius-panel); backdrop-filter: blur(var(--ds-blur-glass));
-    -webkit-backdrop-filter: blur(var(--ds-blur-glass));
-  }
-  .output .hint { color: var(--ds-color-text-secondary); font-size: 15px; margin: 0 0 12px; }
-  .output .url {
-    width: 100%; padding: 12px 16px; border-radius: var(--ds-radius-input);
-    border: 1px solid var(--ds-color-border-default); background: rgba(255,255,255,.6);
-    font-size: 14px; color: var(--ds-color-text-primary); text-align: center; outline: none;
-  }
-  .tool-btns { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
-  .tool-btns button {
-    padding: 8px 24px; border-radius: var(--ds-radius-pill); font-size: 14px; cursor: pointer;
-    border: 1px solid var(--ds-btn-secondary-border); background: var(--ds-btn-secondary-bg);
-    color: var(--ds-btn-secondary-text); font-family: inherit; transition: border-color .2s, color .2s;
-  }
-  .tool-btns button:hover { border-color: var(--ds-color-brand-medium-reverse); color: var(--ds-color-brand-medium-reverse); }
-
   /* ==================== 页脚 ==================== */
   .footer {
     background: var(--ds-color-bg-page); padding: 48px 24px 32px; width: 100%;
@@ -363,11 +317,7 @@
     .toggle .lbl { display: inline; }
   }
   @media (max-width: 767px) {
-    .nav-links { display: none; }
     .header-right .qr-trigger .btn-nav { display: none; }
-    .hamburger { display: flex; }
-    .mobile-menu { display: none; }
-    .mobile-menu.open { display: flex; }
     .hero-inner { padding-top: 48px; }
     .locale-toggle--desktop { display: none; }
   }
@@ -396,14 +346,6 @@
           <defs><clipPath id="clip0_logo"><rect width="26.634" height="19.6" fill="white" transform="translate(0.163086 1.75)"/></clipPath></defs>
         </svg>
       </a>
-      <nav class="nav-links">
-        <a href="https://chat.deepseek.com/" target="_blank" rel="noopener noreferrer">DeepSeek 网页版</a>
-        <a href="https://download.deepseek.com/" target="_blank" rel="noopener noreferrer">DeepSeek 手机应用</a>
-        <a href="https://www.deepseek.com/harness/" target="_blank" rel="noopener noreferrer">DeepSeek Harness</a>
-        <a href="https://platform.deepseek.com/" target="_blank" rel="noopener noreferrer">API 开放平台</a>
-        <a href="https://api-docs.deepseek.com/zh-cn/" target="_blank" rel="noopener noreferrer">API 文档</a>
-        <a href="https://talent.deepseek.com/" target="_blank" rel="noopener noreferrer">加入我们</a>
-      </nav>
       <div class="header-right">
         <div class="qr-trigger">
           <button class="btn btn-ghost btn-nav">获取 APP</button>
@@ -418,21 +360,6 @@
           <button type="button" class="is-active">中文</button>
           <button type="button">EN</button>
         </div>
-      </div>
-      <button class="hamburger" id="hamburger" aria-label="菜单">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      </button>
-    </div>
-    <div class="mobile-menu" id="mobileMenu">
-      <a href="https://chat.deepseek.com/" target="_blank" rel="noopener noreferrer">DeepSeek 网页版</a>
-      <a href="https://download.deepseek.com/" target="_blank" rel="noopener noreferrer">DeepSeek 手机应用</a>
-      <a href="https://www.deepseek.com/harness/" target="_blank" rel="noopener noreferrer">DeepSeek Harness</a>
-      <a href="https://platform.deepseek.com/" target="_blank" rel="noopener noreferrer">API 开放平台</a>
-      <a href="https://api-docs.deepseek.com/zh-cn/" target="_blank" rel="noopener noreferrer">API 文档</a>
-      <a href="https://talent.deepseek.com/" target="_blank" rel="noopener noreferrer">加入我们</a>
-      <div class="locale-toggle">
-        <button type="button" class="is-active">中文</button>
-        <button type="button">EN</button>
       </div>
     </div>
   </div>
@@ -468,15 +395,6 @@
               <button class="send-btn" id="send" aria-label="发送">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></svg>
               </button>
-            </div>
-          </div>
-
-          <div class="output" id="output">
-            <p class="hint">复制下面的链接，教伸手党使用 DeepSeek</p>
-            <input class="url" id="url-output" readonly />
-            <div class="tool-btns">
-              <button id="copy">复制</button>
-              <button id="preview">预览</button>
             </div>
           </div>
 
@@ -591,8 +509,6 @@
     var $ = function (s) { return document.querySelector(s); };
     var input = $('#kw');
     var sendBtn = $('#send');
-    var output = $('#output');
-    var urlOutput = $('#url-output');
     var tagThink = $('#tagThink');
     var tagSearch = $('#tagSearch');
     var toast = $('#toast');
@@ -614,11 +530,6 @@
       headerBar.classList.toggle('is-scrolled', window.scrollY > 8);
     }, { passive: true });
 
-    // 移动端菜单
-    $('#hamburger').addEventListener('click', function () {
-      $('#mobileMenu').classList.toggle('open');
-    });
-
     var query = '';
     try {
       var sp = new URLSearchParams(location.search);
@@ -635,9 +546,6 @@
       if (thinkOn) p.set('think', '1');
       if (searchOn) p.set('search', '1');
       return p.toString();
-    }
-    function linkFor(q) {
-      return location.href.split('#')[0].split('?')[0] + '?' + buildParams(q);
     }
 
     function moveArrow(el, done) {
@@ -676,15 +584,12 @@
       }, 800);
     }
 
-    // 生成链接（无 ?q= 时）
+    // 直接进入对话（与官方一致）
     function submit() {
       if (playing) return;
       var q = input.value.trim();
       if (!q) { tip('搜了个寂寞？'); return; }
-      output.style.display = 'block';
-      urlOutput.value = linkFor(q);
-      urlOutput.focus(); urlOutput.select();
-      output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      location.href = 'chat.html?' + buildParams(q);
     }
 
     tagThink.addEventListener('click', function () {
@@ -701,15 +606,6 @@
     sendBtn.addEventListener('click', submit);
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(); }
-    });
-
-    $('#copy').addEventListener('click', function () {
-      navigator.clipboard.writeText(urlOutput.value)
-        .then(function () { tip('复制成功！赶紧把链接甩给伸手党们！'); })
-        .catch(function () { tip('复制失败，请手动复制。'); });
-    });
-    $('#preview').addEventListener('click', function () {
-      if (urlOutput.value) window.open(urlOutput.value);
     });
 
     if (query) playTutorial(query);
