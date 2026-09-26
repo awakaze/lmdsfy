@@ -1,6 +1,6 @@
 name = "lmdsfy"
 main = "worker.js"
-compatibility_date = "2026-09-27"
+compatibility_date = "2026-09-26"
 
 # 静态资源目录：前端页面（DeepSeek 风格 UI）
 [assets]
