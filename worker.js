@@ -50,11 +50,12 @@ async function handleChat(request, env) {
   }
 
   const baseUrl = (env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com').replace(/\/+$/, '');
+  // deepseek-flash 即 DeepSeek-V4.1-Flash（2026-09 官方推荐模型名）
   const model = env.DEEPSEEK_MODEL || 'deepseek-flash';
   const systemPrompt = env.SYSTEM_PROMPT || '你是由深度求索公司创造的 AI 助手。请热情、准确、清晰地帮助用户解答问题。';
 
-  // 深度思考开关：?think=1 时启用 thinking 模式
-  const think = url.searchParams.get('think') === '1';
+  // 深度思考开关：?think=true 时启用；否则显式禁用（DeepSeek 默认开启思考）
+  const think = url.searchParams.get('think') === 'true';
 
   const upstream = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
@@ -69,7 +70,7 @@ async function handleChat(request, env) {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: q },
       ],
-      ...(think ? { thinking: { type: 'enabled' } } : {}),
+      thinking: { type: think ? 'enabled' : 'disabled' },
     }),
   });
 
