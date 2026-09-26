@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#151517" />
+<title>deepseek | 让我帮你问一下</title>
+<link rel="icon" href="https://fe-static.deepseek.com/chat/favicon.svg" />
+<style>
+  :root {
+    --bg: #151517;
+    --bg-sidebar: rgba(0, 0, 0, 0);
+    --bg-elevated: #1f1f21;
+    --bg-input: #2c2c2e;
+    --bg-hover: #262628;
+    --border: #2e2e30;
+    --border-soft: #242426;
+    --text: #f9fafb;
+    --text-secondary: #adaeb8;
+    --text-tertiary: #7d7f86;
+    --accent: #306eff;
+    --accent-hover: #4a80ff;
+    --accent-active: #175cff;
+    --user-bubble: #43454a;
+    --tool-bg: #283142;
+    --tool-active: #679efe;
+    --radius: 24px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%;
+    background: var(--bg); color: var(--text);
+    font-family: "quote-cjk-patch", Inter, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+    font-size: 14px; line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: rgba(48, 110, 255, .35); }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #333336; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #44444a; }
+
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* 侧边栏 */
+  .sidebar {
+    width: 240px; flex: 0 0 240px; min-width: 0;
+    background: var(--bg-sidebar); border-right: 1px solid var(--border-soft);
+    display: flex; flex-direction: column; padding: 12px; gap: 6px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 6px 10px 12px; }
+  .brand .logo { width: 26px; height: 26px; flex: none; }
+  .brand .name { font-size: 19px; font-weight: 700; letter-spacing: -.5px; }
+  .new-chat {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; padding: 10px 0;
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text); font-size: 14px; cursor: pointer;
+    transition: background .15s;
+  }
+  .new-chat:hover { background: var(--bg-hover); }
+  .new-chat svg { width: 16px; height: 16px; }
+  .side-section { margin-top: 12px; font-size: 12px; color: var(--text-tertiary); padding: 0 6px; }
+  .conv-list { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  .conv-item {
+    text-align: left; width: 100%; padding: 9px 10px; border-radius: 9px;
+    background: transparent; border: none; color: var(--text-secondary);
+    font-size: 14px; cursor: pointer; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; transition: background .12s;
+  }
+  .conv-item:hover { background: var(--bg-hover); }
+  .conv-item.active { background: var(--bg-elevated); color: var(--text); }
+  .side-empty { padding: 18px 8px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
+  .side-footer { margin-top: auto; }
+  .side-user { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; cursor: pointer; }
+  .side-user:hover { background: var(--bg-hover); }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%; flex: none;
+    background: linear-gradient(135deg, #306eff, #175cff);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; font-weight: 700;
+  }
+  .side-user .u-name { font-size: 14px; }
+
+  /* 主区 */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .topbar {
+    height: 52px; flex: none; display: flex; align-items: center; gap: 8px;
+    padding: 0 20px; border-bottom: 1px solid var(--border-soft);
+    font-size: 13px; color: var(--text-secondary);
+  }
+  .topbar .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+  .chat { flex: 1; overflow-y: auto; position: relative; }
+  .chat-inner { max-width: 768px; margin: 0 auto; padding: 24px 24px 40px; }
+
+  .welcome { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 9vh; }
+  .welcome .big-logo { width: 64px; height: 64px; margin-bottom: 20px; }
+  .welcome h1 { font-size: 26px; font-weight: 600; margin: 0 0 8px; }
+  .welcome .sub { color: var(--text-secondary); margin: 0 0 32px; font-size: 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .chip {
+    padding: 8px 16px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--bg-elevated);
+    color: var(--text-secondary); cursor: pointer; transition: all .15s;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--text); }
+
+  /* 消息 */
+  .msg { display: flex; gap: 14px; padding: 14px 0; }
+  .msg .ai-avatar { width: 28px; height: 28px; flex: none; margin-top: 3px; }
+  .msg .body { flex: 1; min-width: 0; }
+  .msg .who { font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--text); }
+  .msg.assistant .body { color: var(--text); }
+
+  /* 用户气泡：右侧胶囊 */
+  .msg.user { justify-content: flex-end; padding: 6px 0 10px; }
+  .msg.user .bubble {
+    background: var(--user-bubble); color: var(--text);
+    padding: 9px 16px; border-radius: 18px; max-width: 80%;
+  }
+  .msg.user .bubble .md p { margin: 0; }
+
+  /* markdown */
+  .md > *:first-child { margin-top: 0; }
+  .md > *:last-child { margin-bottom: 0; }
+  .md p { margin: 0 0 12px; }
+  .md h1, .md h2, .md h3, .md h4 { margin: 20px 0 10px; font-weight: 600; line-height: 1.4; }
+  .md h1 { font-size: 20px; } .md h2 { font-size: 18px; } .md h3 { font-size: 16px; }
+  .md ul, .md ol { margin: 0 0 12px; padding-left: 22px; }
+  .md li { margin: 4px 0; }
+  .md code { font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px; background: var(--bg-elevated); border: 1px solid var(--border-soft); padding: 1px 5px; border-radius: 5px; }
+  .md pre { position: relative; background: #101012; border: 1px solid var(--border-soft); border-radius: 12px; padding: 14px 16px; overflow-x: auto; margin: 0 0 12px; }
+  .md pre code { background: none; border: none; padding: 0; font-size: 13px; line-height: 1.6; }
+  .md pre .copy { position: absolute; top: 8px; right: 8px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary); font-size: 12px; padding: 3px 10px; border-radius: 8px; cursor: pointer; opacity: 0; transition: opacity .15s; }
+  .md pre:hover .copy { opacity: 1; }
+  .md blockquote { border-left: 3px solid var(--accent); margin: 0 0 12px; padding: 2px 0 2px 14px; color: var(--text-secondary); }
+  .md table { border-collapse: collapse; margin: 0 0 12px; }
+  .md th, .md td { border: 1px solid var(--border); padding: 6px 12px; }
+  .md th { background: var(--bg-elevated); }
+  .md a { color: var(--accent); text-decoration: none; }
+  .md a:hover { text-decoration: underline; }
+
+  .think { border: 1px solid var(--border-soft); border-radius: 12px; margin-bottom: 14px; background: var(--bg-elevated); }
+  .think summary { list-style: none; cursor: pointer; padding: 10px 14px; color: var(--text-secondary); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .think summary::-webkit-details-marker { display: none; }
+  .think summary::before { content: "💭"; font-size: 13px; }
+  .think summary .lbl::after { content: "深度思考中…"; }
+  .think[open] summary .lbl { display: none; }
+  .think[open] summary::after { content: "隐藏思考过程"; margin-left: auto; color: var(--text-tertiary); font-size: 12px; }
+  .think .think-body { padding: 0 14px 14px; color: var(--text-tertiary); font-size: 13px; border-top: 1px solid var(--border-soft); padding-top: 10px; white-space: pre-wrap; }
+
+  .cursor { display: inline-block; width: 8px; height: 16px; background: var(--accent); vertical-align: -2px; margin-left: 2px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* 输入区 */
+  .composer-wrap { flex: none; padding: 0 24px 16px; }
+  .composer {
+    max-width: 768px; margin: 0 auto;
+    background: var(--bg-input); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 12px 10px 16px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(48, 110, 255, .15); }
+  .composer-tools { display: flex; gap: 8px; margin-bottom: 8px; }
+  .tool-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 18px; border: 1px solid transparent;
+    background: var(--tool-bg); color: var(--text-secondary); font-size: 13px; cursor: pointer;
+    transition: all .15s;
+  }
+  .tool-btn svg { width: 14px; height: 14px; }
+  .tool-btn:hover { border-color: #34405a; }
+  .tool-btn.active { color: var(--tool-active); }
+  .tool-btn.disabled { opacity: .55; cursor: not-allowed; }
+  .composer-row { display: flex; gap: 10px; align-items: flex-end; }
+  .composer textarea {
+    flex: 1; border: none; outline: none; background: transparent; color: var(--text);
+    font-family: inherit; font-size: 16px; line-height: 1.6;
+    resize: none; max-height: 200px; padding: 6px 2px; min-height: 28px;
+  }
+  .composer textarea::placeholder { color: var(--text-tertiary); }
+  .send {
+    width: 36px; height: 36px; border-radius: 50%; border: none;
+    background: var(--accent); color: #fff; cursor: pointer; flex: none;
+    display: flex; align-items: center; justify-content: center; transition: background .15s, opacity .15s;
+  }
+  .send:hover { background: var(--accent-hover); }
+  .send:disabled { background: #333336; cursor: not-allowed; }
+  .send svg { width: 18px; height: 18px; }
+  .composer-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding: 0 4px; font-size: 12px; color: var(--text-tertiary); }
+  .share-link { color: var(--text-tertiary); cursor: pointer; }
+  .share-link:hover { color: var(--text-secondary); }
+
+  .toast { position: fixed; left: 50%; bottom: 130px; transform: translateX(-50%); background: #2e2e30; color: var(--text); padding: 8px 18px; border-radius: 20px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 720px) {
+    .sidebar { display: none; }
+    .chat-inner, .composer { padding-left: 16px; padding-right: 16px; }
+    .composer { padding-left: 12px; padding-right: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="logo" src="https://fe-static.deepseek.com/chat/favicon.svg" alt="deepseek" />
+      <span class="name">deepseek</span>
+    </div>
+    <button class="new-chat" id="newChat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      开启新对话
+    </button>
+    <div class="side-section">对话</div>
+    <div class="conv-list" id="convList"></div>
+    <div class="side-footer">
+      <div class="side-user">
+        <div class="avatar">D</div>
+        <span class="u-name">游客</span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar"><span class="dot"></span> DeepSeek · 网页版</div>
+
+    <div class="chat" id="chat">
+      <div class="chat-inner" id="chatInner">
+        <div class="welcome" id="welcome">
+          <img class="big-logo" src="https://fe-static.deepseek.com/chat/favicon.svg" alt="deepseek" />
+          <h1>你好，我是 DeepSeek</h1>
+          <p class="sub">有什么可以帮你的吗？</p>
+          <div class="chips" id="chips">
+            <span class="chip">帮我写一段代码</span>
+            <span class="chip">解释一下相对论</span>
+            <span class="chip">推荐几本好书</span>
+            <span class="chip">制定一个旅行计划</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="composer-wrap">
+      <div class="composer" id="composer">
+        <div class="composer-tools">
+          <button class="tool-btn" id="thinkBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
+            深度思考
+          </button>
+          <button class="tool-btn" id="searchBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            智能搜索
+          </button>
+        </div>
+        <div class="composer-row">
+          <textarea id="input" rows="1" placeholder="给 DeepSeek 发送消息"></textarea>
+          <button class="send" id="sendBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+        </div>
+        <div class="composer-foot">
+          <span>Enter 发送 / Shift+Enter 换行</span>
+          <span class="share-link" id="share">分享链接</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+(function () {
+  const $ = (s) => document.querySelector(s);
+  const chatInner = $('#chatInner');
+  const chatScroller = $('#chat');
+  const welcome = $('#welcome');
+  const convList = $('#convList');
+  const input = $('#input');
+  const sendBtn = $('#sendBtn');
+  const thinkBtn = $('#thinkBtn');
+  const searchBtn = $('#searchBtn');
+  const toast = $('#toast');
+
+  const LS_KEY = 'lmds.conversations';
+  let think = false;
+  let search = false;
+  let busy = false;
+  let currentId = null;
+  let conversations = (function () {
+    try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch (e) { return []; }
+  })();
+
+  function persist() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(conversations)); } catch (e) {}
+  }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function renderMd(text) {
+    if (window.marked && typeof window.marked.parse === 'function') {
+      try { return window.marked.parse(text); } catch (e) {}
+    }
+    return '<p>' + esc(text).replace(/\n/g, '<br>') + '</p>';
+  }
+  function scrollBottom() { chatScroller.scrollTop = chatScroller.scrollHeight; }
+  function showToast(msg) {
+    toast.textContent = msg; toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  /* ===== 历史会话 ===== */
+  function renderConvList() {
+    convList.innerHTML = '';
+    if (!conversations.length) {
+      convList.innerHTML = '<div class="side-empty">暂无对话</div>';
+      return;
+    }
+    conversations.slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach((c) => {
+      const item = document.createElement('button');
+      item.className = 'conv-item' + (c.id === currentId ? ' active' : '');
+      item.textContent = c.title || '新对话';
+      item.onclick = () => openConv(c.id);
+      convList.appendChild(item);
+    });
+  }
+
+  function clearChat() {
+    chatInner.innerHTML = '';
+    chatInner.appendChild(welcome);
+    welcome.style.display = 'flex';
+  }
+  function newChat() {
+    currentId = null;
+    clearChat();
+    renderConvList();
+    input.focus();
+  }
+
+  function buildUserBubble(text) {
+    const el = document.createElement('div');
+    el.className = 'msg user';
+    el.innerHTML = '<div class="bubble"><div class="md">' + renderMd(text) + '</div></div>';
+    return el;
+  }
+  function buildAssistantBlock(content, reasoning) {
+    const el = document.createElement('div');
+    el.className = 'msg assistant';
+    el.innerHTML =
+      '<img class="ai-avatar" src="https://fe-static.deepseek.com/chat/favicon.svg" alt="">' +
+      '<div class="body"><div class="who">DeepSeek</div></div>';
+    const body = el.querySelector('.body');
+    if (reasoning) {
+      const thinkEl = document.createElement('details');
+      thinkEl.className = 'think';
+      thinkEl.innerHTML = '<summary><span class="lbl"></span></summary><div class="think-body">' + esc(reasoning) + '</div>';
+      body.appendChild(thinkEl);
+    }
+    const md = document.createElement('div');
+    md.className = 'md';
+    md.innerHTML = content ? renderMd(content) : '';
+    body.appendChild(md);
+    applyCopyButtons(md);
+    return el;
+  }
+
+  function openConv(id) {
+    const c = conversations.find((x) => x.id === id);
+    if (!c) return;
+    currentId = id;
+    chatInner.innerHTML = '';
+    c.messages.forEach((m) => {
+      chatInner.appendChild(m.role === 'user' ? buildUserBubble(m.content) : buildAssistantBlock(m.content, m.reasoning));
+    });
+    renderConvList();
+    scrollBottom();
+    input.focus();
+  }
+
+  /* ===== 提问 ===== */
+  async function sendQuestion(q) {
+    if (busy || !q.trim()) return;
+    busy = true;
+    sendBtn.disabled = true;
+    try { history.replaceState(null, '', location.pathname + '?q=' + encodeURIComponent(q)); } catch (e) {}
+
+    let conv = conversations.find((c) => c.id === currentId);
+    if (!conv) {
+      conv = { id: uid(), title: q.slice(0, 24), updatedAt: Date.now(), messages: [] };
+      conversations.push(conv);
+      currentId = conv.id;
+    }
+    conv.messages.push({ role: 'user', content: q });
+    conv.updatedAt = Date.now();
+    persist();
+    renderConvList();
+
+    if (welcome && welcome.parentNode) welcome.style.display = 'none';
+    chatInner.appendChild(buildUserBubble(q));
+
+    const el = document.createElement('div');
+    el.className = 'msg assistant';
+    el.innerHTML =
+      '<img class="ai-avatar" src="https://fe-static.deepseek.com/chat/favicon.svg" alt="">' +
+      '<div class="body"><div class="who">DeepSeek</div><div class="md"></div></div>';
+    chatInner.appendChild(el);
+    const body = el.querySelector('.body');
+    const mdEl = el.querySelector('.md');
+
+    let content = '';
+    let reasoning = '';
+    let thinkEl = null;
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    mdEl.appendChild(cursor);
+
+    function flushThink() {
+      if (reasoning && !thinkEl) {
+        thinkEl = document.createElement('details');
+        thinkEl.className = 'think';
+        thinkEl.open = true;
+        thinkEl.innerHTML = '<summary><span class="lbl"></span></summary><div class="think-body"></div>';
+        body.insertBefore(thinkEl, mdEl);
+      }
+      if (thinkEl) thinkEl.querySelector('.think-body').textContent = reasoning;
+    }
+    function flushContent() {
+      mdEl.innerHTML = renderMd(content);
+      mdEl.appendChild(cursor);
+      applyCopyButtons(mdEl);
+      scrollBottom();
+    }
+
+    try {
+      const res = await fetch('/api/chat?q=' + encodeURIComponent(q) + (think ? '&think=1' : '') + (search ? '&search=1' : ''));
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || ('HTTP ' + res.status));
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          if (!line.startsWith('data:')) continue;
+          const data = line.slice(5).trim();
+          if (data === '[DONE]') continue;
+          let j;
+          try { j = JSON.parse(data); } catch (e) { continue; }
+          const delta = j.choices && j.choices[0] && j.choices[0].delta;
+          if (!delta) continue;
+          if (delta.reasoning_content) { reasoning += delta.reasoning_content; flushThink(); }
+          if (delta.content) { content += delta.content; flushContent(); }
+        }
+      }
+    } catch (err) {
+      mdEl.innerHTML = '<p style="color:#e5484d">请求失败：' + esc(String(err.message || err)) + '</p>';
+    } finally {
+      cursor.remove();
+      if (thinkEl) thinkEl.open = false;
+      if (content || reasoning) {
+        conv.messages.push({ role: 'assistant', content, reasoning });
+        conv.updatedAt = Date.now();
+        persist();
+        renderConvList();
+      }
+      scrollBottom();
+      busy = false;
+      sendBtn.disabled = !input.value.trim();
+    }
+  }
+
+  function applyCopyButtons(root) {
+    root.querySelectorAll('pre').forEach((pre) => {
+      if (pre.querySelector('.copy')) return;
+      const btn = document.createElement('button');
+      btn.className = 'copy';
+      btn.textContent = '复制';
+      btn.onclick = () => {
+        const code = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+        navigator.clipboard.writeText(code).then(() => {
+          btn.textContent = '已复制';
+          setTimeout(() => (btn.textContent = '复制'), 1500);
+        }).catch(() => showToast('复制失败'));
+      };
+      pre.appendChild(btn);
+    });
+  }
+
+  /* ===== 事件 ===== */
+  function submit() {
+    const q = input.value.trim();
+    if (!q || busy) return;
+    input.value = '';
+    autoResize();
+    sendBtn.disabled = true;
+    sendQuestion(q);
+  }
+  function autoResize() {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 200) + 'px';
+  }
+
+  input.addEventListener('input', () => {
+    autoResize();
+    sendBtn.disabled = !input.value.trim() || busy;
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      e.preventDefault();
+      submit();
+    }
+  });
+  sendBtn.addEventListener('click', submit);
+  input.focus();
+
+  thinkBtn.addEventListener('click', () => {
+    think = !think;
+    thinkBtn.classList.toggle('active', think);
+  });
+
+  searchBtn.addEventListener('click', () => {
+    search = !search;
+    searchBtn.classList.toggle('active', search);
+  });
+
+  $('#newChat').addEventListener('click', newChat);
+
+  $('#share').addEventListener('click', () => {
+    const q = new URLSearchParams(location.search).get('q');
+    if (!q) { showToast('先提问再分享'); return; }
+    navigator.clipboard.writeText(location.origin + location.pathname + '?q=' + encodeURIComponent(q))
+      .then(() => showToast('链接已复制，甩给小伙伴吧'))
+      .catch(() => showToast('复制失败，请手动复制地址栏'));
+  });
+
+  document.querySelectorAll('.chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      if (busy) return;
+      input.value = chip.textContent.trim();
+      autoResize();
+      sendBtn.disabled = false;
+      input.focus();
+    });
+  });
+
+  /* ===== 初始化 ===== */
+  renderConvList();
+  const initParams = new URLSearchParams(location.search);
+  if (initParams.get('think') === '1') { think = true; thinkBtn.classList.add('active'); }
+  if (initParams.get('search') === '1') { search = true; searchBtn.classList.add('active'); }
+  const qParam = initParams.get('q');
+  if (qParam) sendQuestion(qParam.trim());
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+name = "lmdsfy"
+main = "worker.js"
+compatibility_date = "2026-09-27"
+
+# 静态资源目录：前端页面（DeepSeek 风格 UI）
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# 说明：
+# - DEEPSEEK_API_KEY 为密钥，请用命令注入，切勿写进本文件或提交到 git：
+#     npx wrangler secret put DEEPSEEK_API_KEY
+# - 可选环境变量（用 wrangler secret put 或 dashboard 设置）：
+#     DEEPSEEK_BASE_URL  默认 https://api.deepseek.com
+#     DEEPSEEK_MODEL     默认 deepseek-flash
+#     SYSTEM_PROMPT      自定义系统提示词（可选）
+[vars]
+DEEPSEEK_BASE_URL = "https://api.deepseek.com"
+DEEPSEEK_MODEL = "deepseek-flash"
