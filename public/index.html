@@ -238,45 +238,29 @@
   .send-btn.pressed { transform: scale(.85); }
   .send-btn svg { width: 18px; height: 18px; }
 
+  /* 链接输出面板（生成链接后显示） */
+  .output {
+    display: none; width: 100%; padding: 20px 22px; text-align: center;
+    background: var(--ds-color-bg-surface-1); border: 1px solid var(--ds-color-border-subtle);
+    border-radius: var(--ds-radius-panel); backdrop-filter: blur(var(--ds-blur-glass));
+    -webkit-backdrop-filter: blur(var(--ds-blur-glass));
+  }
+  .output .hint { color: var(--ds-color-text-secondary); font-size: 15px; margin: 0 0 12px; }
+  .output .url {
+    width: 100%; padding: 12px 16px; border-radius: var(--ds-radius-input);
+    border: 1px solid var(--ds-color-border-default); background: rgba(255,255,255,.6);
+    font-size: 14px; color: var(--ds-color-text-primary); text-align: center; outline: none;
+  }
+  .tool-btns { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
+  .tool-btns button {
+    padding: 8px 24px; border-radius: var(--ds-radius-pill); font-size: 14px; cursor: pointer;
+    border: 1px solid var(--ds-btn-secondary-border); background: var(--ds-btn-secondary-bg);
+    color: var(--ds-btn-secondary-text); font-family: inherit; transition: border-color .2s, color .2s;
+  }
+  .tool-btns button:hover { border-color: var(--ds-color-brand-medium-reverse); color: var(--ds-color-brand-medium-reverse); }
+
   /* 主 CTA 按钮 */
   .hero-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px; width: 100%; }
-
-  /* ==================== 页脚 ==================== */
-  .footer {
-    background: var(--ds-color-bg-page); padding: 48px 24px 32px; width: 100%;
-  }
-  .footer-inner { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
-  .footer-top {
-    display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between;
-    gap: 24px 32px;
-  }
-  .footer-brand { display: flex; flex-direction: column; gap: 20px; }
-  .footer-brand .brand { height: 23px; }
-  .footer-social { display: flex; align-items: center; gap: 12px; }
-  .social-btn {
-    display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;
-    border-radius: 50%; color: var(--ds-color-text-secondary); cursor: pointer;
-    transition: color .2s, background-color .2s; position: relative;
-  }
-  .social-btn:hover { color: var(--ds-color-text-primary); background: var(--ds-color-bg-hover); }
-  .social-btn svg { width: 18px; height: 18px; }
-  .social-btn .qr-panel { left: 50%; transform: translateX(-50%) translateY(-4px); }
-  .social-btn:hover .qr-panel { transform: translateX(-50%) translateY(0); }
-
-  .footer-cols { flex: 1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px 32px; }
-  .footer-col { display: flex; flex-direction: column; gap: 24px; min-width: 120px; }
-  .footer-col h4 { margin: 0; font-size: 14px; font-weight: 500; color: var(--ds-color-text-primary); }
-  .footer-col .links { display: flex; flex-direction: column; gap: 20px; }
-  .footer-col .links a { font-size: 14px; line-height: 150%; color: var(--ds-color-text-description); }
-  .footer-col .links a:hover { color: var(--ds-color-text-primary); }
-
-  .footer-bottom {
-    display: flex; flex-direction: column; gap: 16px; padding-top: 24px;
-    border-top: 1px solid var(--ds-color-border-subtle);
-  }
-  .footer-bottom .icp { display: flex; flex-direction: column; gap: 4px; }
-  .footer-bottom .icp a { font-size: 14px; color: var(--ds-color-text-description); }
-  .copyright { font-size: 14px; color: var(--ds-color-text-description); }
 
   /* ==================== Toast / 教程箭头 ==================== */
   .toast {
@@ -311,7 +295,6 @@
   @media (min-width: 1024px) {
     .slogan { font-size: 46px; letter-spacing: .4em; }
     .header-wrapper { width: min(100% - 160px, 1280px); }
-    .footer-bottom { flex-direction: row; align-items: center; justify-content: space-between; }
   }
   @media (min-width: 440px) {
     .toggle .lbl { display: inline; }
@@ -387,7 +370,7 @@
                   <svg viewBox="0 0 14 14" fill="none"><path d="M7.06431 5.93342C7.68763 5.93342 8.19307 6.43904 8.19322 7.06233C8.19322 7.68573 7.68772 8.19123 7.06431 8.19123C6.44099 8.19113 5.9354 7.68567 5.9354 7.06233C5.93555 6.43911 6.44108 5.93353 7.06431 5.93342Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8.6815 0.963693C10.1169 0.447019 11.6266 0.374829 12.5633 1.31135C13.5 2.24805 13.4277 3.75776 12.911 5.19319C12.7126 5.74431 12.4386 6.31796 12.0965 6.89729C12.4969 7.54638 12.8141 8.19018 13.036 8.80647C13.5527 10.2419 13.6251 11.7516 12.6883 12.6883C11.7516 13.625 10.242 13.5527 8.8065 13.036C8.19022 12.8141 7.54641 12.4969 6.89732 12.0965C6.31797 12.4386 5.74435 12.7125 5.19322 12.911C3.75777 13.4276 2.2481 13.5 1.31138 12.5633C0.374859 11.6266 0.447049 10.1168 0.963724 8.68147C1.17185 8.10338 1.46321 7.50063 1.82896 6.8924C1.52182 6.35711 1.27235 5.82825 1.08872 5.31819C0.572068 3.88278 0.499714 2.37306 1.43638 1.43635C2.37308 0.499655 3.8828 0.572044 5.31822 1.08869C5.82828 1.27232 6.35715 1.5218 6.89243 1.82893C7.50066 1.46318 8.10341 1.17181 8.6815 0.963693ZM11.3573 8.01154C10.9083 8.62253 10.3901 9.22873 9.80943 9.8094C9.22877 10.3901 8.62255 10.9083 8.01158 11.3572C8.4257 11.5841 8.8287 11.7688 9.21275 11.9071C10.5456 12.3868 11.4246 12.2547 11.8397 11.8397C12.2548 11.4246 12.3869 10.5456 11.9071 9.21272C11.7688 8.82866 11.5841 8.42568 11.3573 8.01154ZM2.56529 8.02912C2.37344 8.39322 2.21495 8.74796 2.09263 9.08772C1.61291 10.4204 1.74512 11.2995 2.16001 11.7147C2.57505 12.1297 3.45415 12.2618 4.78697 11.7821C5.11057 11.6656 5.44786 11.5164 5.7938 11.3367C5.249 10.9223 4.70922 10.4533 4.19029 9.9344C3.57578 9.31987 3.03169 8.67633 2.56529 8.02912ZM6.90708 3.2469C6.24065 3.70479 5.5646 4.26321 4.91392 4.91389C4.26325 5.56456 3.70482 6.24063 3.24693 6.90705C3.72674 7.63325 4.32777 8.37459 5.03892 9.08576C5.64943 9.69627 6.28183 10.2265 6.90806 10.6678C7.59368 10.2025 8.2908 9.63076 8.96079 8.96076C9.6308 8.29075 10.2025 7.59366 10.6678 6.90803C10.2265 6.2818 9.69631 5.6494 9.08579 5.03889C8.37462 4.32773 7.63328 3.72672 6.90708 3.2469ZM11.7147 2.15998C11.2996 1.74509 10.4204 1.61288 9.08775 2.0926C8.74835 2.21479 8.39382 2.37271 8.03013 2.56428C8.67728 3.03065 9.31995 3.5758 9.93443 4.19026C10.4534 4.7092 10.9223 5.24896 11.3368 5.79377C11.5164 5.44785 11.6656 5.11052 11.7821 4.78694C12.2618 3.45416 12.1297 2.57502 11.7147 2.15998ZM4.91197 2.2176C3.57922 1.73788 2.70004 1.86995 2.28501 2.28498C1.87001 2.70003 1.73791 3.5792 2.21763 4.91194C2.31709 5.18822 2.44112 5.47427 2.58677 5.7674C3.01931 5.1887 3.51474 4.6158 4.06529 4.06526C4.61584 3.5147 5.18872 3.01928 5.76743 2.58674C5.47431 2.4411 5.18824 2.31706 4.91197 2.2176Z" fill="currentColor"/></svg>
                   <span class="lbl">深度思考</span>
                 </button>
-                <button type="button" class="toggle selected" id="tagSearch" aria-pressed="true">
+                <button type="button" class="toggle" id="tagSearch" aria-pressed="false">
                   <svg viewBox="0 0 14 14" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 0.150391C10.7832 0.150391 13.8496 3.21685 13.8496 7C13.8496 10.7832 10.7832 13.8496 7 13.8496C3.21685 13.8496 0.150391 10.7832 0.150391 7C0.150391 3.21685 3.21685 0.150391 7 0.150391ZM5.37793 7.59961C5.42667 9.03204 5.64751 10.2965 5.97363 11.2197C6.15993 11.7471 6.36943 12.1301 6.57324 12.3701C6.77748 12.6105 6.9234 12.6504 7 12.6504C7.0766 12.6504 7.22252 12.6105 7.42676 12.3701C7.63057 12.1301 7.84007 11.7471 8.02637 11.2197C8.35249 10.2965 8.57333 9.03204 8.62207 7.59961H5.37793ZM1.38184 7.59961C1.61453 9.80492 3.1159 11.6304 5.14258 12.3359C5.03265 12.1128 4.93224 11.8724 4.84277 11.6191C4.46339 10.5451 4.22772 9.13988 4.17871 7.59961H1.38184ZM9.82129 7.59961C9.77228 9.13988 9.53661 10.5451 9.15723 11.6191C9.06771 11.8726 8.96645 12.1127 8.85645 12.3359C10.8836 11.6307 12.3854 9.80524 12.6182 7.59961H9.82129ZM7 1.34961C6.9234 1.34961 6.77748 1.38949 6.57324 1.62988C6.36943 1.86988 6.15993 2.25291 5.97363 2.78027C5.64751 3.70351 5.42667 4.96796 5.37793 6.40039H8.62207C8.57333 4.96796 8.35249 3.70351 8.02637 2.78027C7.84007 2.25291 7.63057 1.86988 7.42676 1.62988C7.22252 1.38949 7.0766 1.34961 7 1.34961ZM8.85645 1.66309C8.9666 1.88656 9.0676 2.12715 9.15723 2.38086C9.53661 3.45487 9.77228 4.86012 9.82129 6.40039H12.6182C12.3854 4.19465 10.8837 2.36828 8.85645 1.66309ZM5.14258 1.66309C3.11575 2.3685 1.61454 4.19497 1.38184 6.40039H4.17871C4.22772 4.86012 4.46339 3.45487 4.84277 2.38086C4.93234 2.1273 5.03249 1.88645 5.14258 1.66309Z" fill="currentColor"/></svg>
                   <span class="lbl">智能搜索</span>
                 </button>
@@ -395,6 +378,15 @@
               <button class="send-btn" id="send" aria-label="发送">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></svg>
               </button>
+            </div>
+          </div>
+
+          <div class="output" id="output">
+            <p class="hint">复制下面的链接，教伸手党使用 DeepSeek</p>
+            <input class="url" id="url-output" readonly />
+            <div class="tool-btns">
+              <button id="copy">复制</button>
+              <button id="preview">预览</button>
             </div>
           </div>
 
@@ -411,88 +403,6 @@
         </div>
       </div>
     </section>
-
-    <footer class="footer">
-      <div class="footer-inner">
-        <div class="footer-top">
-          <div class="footer-brand">
-            <a class="brand" href="/">
-              <svg width="143" height="23" viewBox="0 0 143 23" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M26.5174 3.39471C26.235 3.2567 26.1137 3.52006 25.9487 3.65346C25.8923 3.69659 25.8446 3.75294 25.7969 3.80469C25.3846 4.24516 24.9027 4.53439 24.2737 4.49989C23.3536 4.44814 22.5682 4.73737 21.8735 5.44119C21.7258 4.57349 21.2353 4.0554 20.4889 3.72304C20.0985 3.55054 19.7034 3.37746 19.4297 3.00197C19.2388 2.73459 19.1865 2.43673 19.091 2.14289C19.0301 1.96579 18.9697 1.78466 18.7656 1.75418C18.5442 1.71968 18.4574 1.90541 18.3705 2.06067C18.0232 2.69549 17.8887 3.39471 17.9019 4.10313C17.9324 5.6965 18.6051 6.96556 19.9421 7.86834C20.0939 7.97184 20.133 8.07535 20.0852 8.22658C19.9938 8.53766 19.8857 8.83955 19.7903 9.15063C19.7293 9.34901 19.6384 9.39271 19.4257 9.30588C18.692 8.9994 18.0583 8.54571 17.4982 7.99772C16.5477 7.07827 15.6881 6.06336 14.6162 5.26869C14.3644 5.08296 14.1125 4.91045 13.8521 4.746C12.7584 3.68394 13.9952 2.81164 14.2816 2.70814C14.5812 2.60003 14.3857 2.22857 13.4179 2.23317C12.4502 2.2372 11.5646 2.56151 10.4359 2.99335C10.2708 3.05832 10.0972 3.10547 9.91951 3.14457C8.8954 2.95022 7.83162 2.90709 6.72069 3.03245C4.62877 3.26533 2.95777 4.25436 1.72954 5.94261C0.254043 7.97184 -0.0932678 10.2777 0.33167 12.6824C0.778458 15.2171 2.07225 17.3153 4.06008 18.9558C6.12152 20.6567 8.49577 21.4905 11.2047 21.3306C12.8498 21.2358 14.6812 21.0155 16.7473 19.2669C17.2682 19.5262 17.8151 19.6297 18.7219 19.7074C19.4205 19.7723 20.0933 19.6729 20.6143 19.5648C21.4302 19.3923 21.3739 18.6367 21.0789 18.4981C18.6874 17.3843 19.2124 17.8374 18.7351 17.4706C19.9501 16.033 21.8063 13.4776 22.379 9.99821C22.4353 9.61409 22.5072 9.073 22.4986 8.76192C22.494 8.57216 22.5377 8.49856 22.7545 8.47671C23.3536 8.40771 23.935 8.24383 24.4692 7.94999C26.0188 7.10357 26.6439 5.71318 26.7911 4.04678C26.8129 3.79204 26.7865 3.52869 26.5174 3.39471Z" fill="currentColor"/><path d="M78.6784 18.6813H77.1077V16.2462H78.6784C79.6513 16.2462 80.6341 16.0037 81.2672 15.3298C81.9009 14.6559 82.14 13.6222 82.14 12.589C82.14 11.5559 81.9109 10.5222 81.2672 9.84884C80.6246 9.17496 79.6513 8.93245 78.6784 8.93245C77.7056 8.93245 76.7227 9.17496 76.0885 9.84884C75.4549 10.5227 75.2157 11.5559 75.2157 12.589V22.5899H72.4604V6.50684H75.2157V7.53106H75.7209C75.7756 7.46792 75.8304 7.41428 75.8857 7.36064C76.5752 6.73146 77.6307 6.50684 78.6684 6.50684C80.2944 6.50684 81.9193 6.91138 82.9849 8.03451C84.0499 9.15764 84.4265 10.8826 84.4265 12.5991C84.4265 14.3156 84.0404 16.0316 82.9849 17.1637C81.9288 18.2958 80.2944 18.6824 78.6784 18.6824V18.6813Z" fill="currentColor"/><path d="M36.7486 6.93999H38.3188V9.37511H36.7486C35.7752 9.37511 34.7929 9.61762 34.1593 10.2915C33.5256 10.9654 33.287 11.9991 33.287 13.0323C33.287 14.0654 33.5167 15.0986 34.1593 15.7725C34.8019 16.4463 35.7752 16.6888 36.7486 16.6888C37.722 16.6888 38.7049 16.4463 39.3385 15.7725C39.9722 15.0986 40.2108 14.0654 40.2108 13.0323V3.02246H42.9655V19.115H40.2108V18.0908H39.7056C39.6503 18.1534 39.5955 18.2076 39.5402 18.2612C38.8513 18.8898 37.7952 19.115 36.7576 19.115C35.1321 19.115 33.5066 18.711 32.4416 17.5879C31.3766 16.4648 31 14.7393 31 13.0233C31 11.3073 31.3856 9.5908 32.4416 8.45873C33.5066 7.3356 35.1321 6.93999 36.7486 6.93999Z" fill="currentColor"/><path d="M56.7855 12.8145V13.794H49.4483V11.8445H54.3151C54.2051 11.1348 53.948 10.4699 53.4887 9.98433C52.8277 9.28363 51.8079 9.03218 50.7982 9.03218C49.7886 9.03218 48.7688 9.28363 48.1078 9.98433C47.4468 10.685 47.2076 11.7545 47.2076 12.8151C47.2076 13.8756 47.4462 14.9535 48.1078 15.6452C48.7688 16.337 49.788 16.5979 50.7982 16.5979C51.8085 16.5979 52.8277 16.3465 53.4887 15.6452C53.5804 15.5463 53.6631 15.4385 53.7458 15.3306H56.4642C56.2256 16.1755 55.849 16.9393 55.2796 17.5322C54.1777 18.6911 52.479 19.1135 50.7982 19.1135C49.1175 19.1135 47.4188 18.7 46.3169 17.5322C45.215 16.3644 44.811 14.5852 44.811 12.8151C44.811 11.0449 45.2061 9.25681 46.3169 8.09792C47.4283 6.93903 49.1175 6.5166 50.7982 6.5166C52.479 6.5166 54.1777 6.93009 55.2796 8.09792C56.3904 9.26575 56.7855 11.0449 56.7855 12.8151V12.8145Z" fill="currentColor"/><path d="M70.6151 12.8145V13.794H63.2779V11.8445H68.1447C68.0341 11.1348 67.7776 10.4699 67.3183 9.98433C66.6573 9.28363 65.6375 9.03218 64.6278 9.03218C63.6181 9.03218 62.5984 9.28363 61.9374 9.98433C61.2763 10.685 61.0372 11.7545 61.0372 12.8151C61.0372 13.8756 61.2758 14.9535 61.9374 15.6452C62.5984 16.337 63.6181 16.5979 64.6278 16.5979C65.6375 16.5979 66.6573 16.3465 67.3183 15.6452C67.4105 15.5463 67.4927 15.4385 67.5748 15.3306H70.2938C70.0546 16.1755 69.678 16.9393 69.1086 17.5322C68.0067 18.6911 66.3081 19.1135 64.6278 19.1135C62.9476 19.1135 61.2484 18.7 60.1465 17.5322C59.0446 16.3644 58.6406 14.5852 58.6406 12.8151C58.6406 11.0449 59.0357 9.25681 60.1465 8.09792C61.2579 6.93903 62.9471 6.5166 64.6278 6.5166C66.3086 6.5166 68.0067 6.93009 69.1086 8.09792C70.22 9.26575 70.6151 11.0449 70.6151 12.8151V12.8145Z" fill="currentColor"/><path d="M92.2781 19.1146C93.9589 19.1146 95.657 18.8721 96.7589 18.1804C97.8607 17.4886 98.2653 16.437 98.2653 15.3949C98.2653 14.3528 97.8697 13.2922 96.7589 12.6094C95.657 11.9266 93.9583 11.6746 92.2781 11.6746C91.5612 11.6746 90.9002 11.5757 90.4319 11.3153C89.9637 11.0454 89.7893 10.6414 89.7893 10.2369C89.7893 9.83234 89.9547 9.41941 90.4319 9.15846C90.9002 8.88858 91.626 8.79917 92.3418 8.79917C93.0576 8.79917 93.7834 8.89808 94.2528 9.15846C94.721 9.42835 94.8954 9.83234 94.8954 10.2369H97.6959C97.6959 9.19422 97.3383 8.13424 96.3375 7.45142C95.3368 6.76861 93.803 6.5166 92.2786 6.5166C90.7543 6.5166 89.2211 6.75911 88.2197 7.45142C87.219 8.14318 86.8603 9.19422 86.8603 10.2369C86.8603 11.2796 87.2184 12.3395 88.2197 13.0224C89.2205 13.7052 90.7538 13.9572 92.2786 13.9572C93.0682 13.9572 93.941 14.0561 94.464 14.3165C94.9881 14.5774 95.1714 14.9903 95.1714 15.3949C95.1714 15.7994 94.9881 16.2124 94.464 16.4733C93.941 16.7337 93.1419 16.8326 92.3524 16.8326C91.5629 16.8326 90.7543 16.7337 90.2397 16.4733C89.7256 16.2129 89.5323 15.7994 89.5323 15.3949H86.2998C86.2998 16.4376 86.6943 17.4975 87.8063 18.1804C88.9171 18.8632 90.5979 19.1146 92.2786 19.1146H92.2781Z" fill="currentColor"/><path d="M112.094 12.8145V13.794H104.757V11.8445H109.624C109.514 11.1348 109.257 10.4699 108.798 9.98433C108.136 9.28363 107.117 9.03218 106.106 9.03218C105.095 9.03218 104.077 9.28363 103.416 9.98433C102.755 10.685 102.517 11.7545 102.517 12.8151C102.517 13.8756 102.755 14.9535 103.416 15.6452C104.077 16.337 105.097 16.5979 106.106 16.5979C107.116 16.5979 108.136 16.3465 108.798 15.6452C108.889 15.5463 108.972 15.4385 109.054 15.3306H111.772C111.533 16.1755 111.157 16.9393 110.588 17.5322C109.486 18.6911 107.787 19.1135 106.106 19.1135C104.425 19.1135 102.727 18.7 101.625 17.5322C100.524 16.3644 100.12 14.5852 100.12 12.8151C100.12 11.0449 100.515 9.25681 101.625 8.09792C102.737 6.93903 104.427 6.5166 106.106 6.5166C107.786 6.5166 109.486 6.93009 110.588 8.09792C111.699 9.26575 112.093 11.0449 112.093 12.8151L112.094 12.8145Z" fill="currentColor"/><path d="M125.924 12.8145V13.794H118.586V11.8445H123.453C123.344 11.1348 123.086 10.4699 122.627 9.98433C121.966 9.28363 120.947 9.03218 119.936 9.03218C118.926 9.03218 117.907 9.28363 117.246 9.98433C116.585 10.685 116.346 11.7545 116.346 12.8151C116.346 13.8756 116.585 14.9535 117.246 15.6452C117.907 16.337 118.927 16.5979 119.936 16.5979C120.946 16.5979 121.966 16.3465 122.627 15.6452C122.719 15.5463 122.801 15.4385 122.884 15.3306H125.602C125.363 16.1755 124.987 16.9393 124.418 17.5322C123.316 18.6911 121.617 19.1135 119.936 19.1135C118.256 19.1135 116.558 18.7 115.456 17.5322C114.354 16.3644 113.949 14.5852 113.949 12.8151C113.949 11.0449 114.344 9.25681 115.456 8.09792C116.566 6.93903 118.256 6.5166 119.936 6.5166C121.617 6.5166 123.315 6.93009 124.418 8.09792C125.529 9.26575 125.924 11.0449 125.924 12.8151V12.8145Z" fill="currentColor"/><path d="M130.524 3.02246H127.77V19.115H130.524V3.02246Z" fill="currentColor"/><path d="M135.227 12.4374L139.744 19.1136H136.337L131.819 12.4374L136.337 7.07324H139.744L135.227 12.4374Z" fill="currentColor"/></svg>
-            </a>
-            <div class="footer-social">
-              <a class="social-btn" href="mailto:service@deepseek.com" aria-label="Email">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
-              </a>
-              <a class="social-btn" href="https://github.com/deepseek-ai" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.94.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.56 9.56 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .26.18.58.69.48A10 10 0 0 0 12 2z"/></svg>
-              </a>
-              <div class="social-btn qr-trigger" aria-label="WeChat">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.3 4C5.6 4 2.6 6.5 2.6 9.59c0 1.78 1 3.37 2.56 4.41l-.64 1.92 2.22-1.14c.82.2 1.68.31 2.56.31h.4A6.4 6.4 0 0 1 9.3 4zm-3.6 3.1a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8zm4.9 0a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8z"/><path d="M21.4 12.9c0-2.55-2.42-4.6-5.4-4.6s-5.4 2.05-5.4 4.6 2.42 4.6 5.4 4.6c.7 0 1.38-.1 2.02-.29l2.03 1.04-.59-1.75c1.26-.94 1.94-2.19 1.94-3.6zm-7.15-1.3a.8.8 0 1 1 0-1.6.8.8 0 0 1 0 1.6zm3.5 0a.8.8 0 1 1 0-1.6.8.8 0 0 1 0 1.6z"/></svg>
-                <div class="qr-menu">
-                  <div class="qr-panel">
-                    <img src="https://www.deepseek.com/images/qr-wechat.png" alt="QR Code" />
-                    <span>扫码关注公众号</span>
-                  </div>
-                </div>
-              </div>
-              <a class="social-btn" href="https://www.zhihu.com/org/deepseek-75" target="_blank" rel="noopener noreferrer" aria-label="Zhihu">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 6.9h2.3v1.9h-2.3V6.9zM9.6 6.9h2.3v1.9H9.6V6.9zm6.5 5.1h-1.2v6.3h-2v-6.3h-1.2V8.3h4.4v3.7zM8.6 12.3c-.7.9-1.6 1.5-2.6 1.8v3h4.1v1.6H3.9v-1.6h1.2v-2.3c-1.5-.5-2.6-1.5-3.2-2.8h2.8c.4 1 1.3 1.6 2.3 1.6.8 0 1.5-.5 1.6-1.2H8.6v-.1z"/></svg>
-              </a>
-              <a class="social-btn" href="https://www.xiaohongshu.com/user/profile/66821202000000001b01a005" target="_blank" rel="noopener noreferrer" aria-label="RedNote">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-2.2 0-4 1.8-4 4v6c0 2.2 1.8 4 4 4s4-1.8 4-4V7c0-2.2-1.8-4-4-4zm-3.5 4h1.5v6c0 1.1.9 2 2 2s2-.9 2-2V7H15.5v6a3.5 3.5 0 0 1-7 0V7z"/></svg>
-              </a>
-            </div>
-          </div>
-          <div class="footer-cols">
-            <div class="footer-col">
-              <h4>产品</h4>
-              <div class="links">
-                <a href="https://chat.deepseek.com/" target="_blank" rel="noopener noreferrer">DeepSeek 网页版</a>
-                <a href="https://download.deepseek.com/" target="_blank" rel="noopener noreferrer">DeepSeek 手机应用</a>
-                <a href="https://www.deepseek.com/harness/" target="_blank" rel="noopener noreferrer">DeepSeek Harness</a>
-                <a href="https://platform.deepseek.com/" target="_blank" rel="noopener noreferrer">API 开放平台</a>
-                <a href="https://api-docs.deepseek.com/zh-cn/" target="_blank" rel="noopener noreferrer">API 文档</a>
-                <a href="https://api-docs.deepseek.com/zh-cn/quick_start/pricing" target="_blank" rel="noopener noreferrer">API 价格</a>
-                <a href="https://status.deepseek.com/" target="_blank" rel="noopener noreferrer">服务状态</a>
-              </div>
-            </div>
-            <div class="footer-col">
-              <h4>研究</h4>
-              <div class="links">
-                <a href="https://www.deepseek.com/news/deepseek-v4-1-flash/" target="_blank" rel="noopener noreferrer">DeepSeek V4.1</a>
-                <a href="https://www.deepseek.com/news/v4-preview/" target="_blank" rel="noopener noreferrer">DeepSeek V4</a>
-                <a href="https://www.deepseek.com/news/deepseek-v3-2/" target="_blank" rel="noopener noreferrer">DeepSeek V3.2</a>
-                <a href="https://www.deepseek.com/news/deepseek-v3-1/" target="_blank" rel="noopener noreferrer">DeepSeek V3.1</a>
-                <a href="https://www.deepseek.com/news/r1-0528/" target="_blank" rel="noopener noreferrer">DeepSeek R1</a>
-                <a href="https://www.deepseek.com/news/deepseek-v3/" target="_blank" rel="noopener noreferrer">DeepSeek V3</a>
-                <a href="https://www.deepseek.com/news/" target="_blank" rel="noopener noreferrer">更多</a>
-              </div>
-            </div>
-            <div class="footer-col">
-              <h4>法务 &amp; 安全</h4>
-              <div class="links">
-                <a href="mailto:security@deepseek.com" target="_blank">反馈安全漏洞</a>
-                <a href="https://www.deepseek.com/transparency/" target="_blank" rel="noopener noreferrer">透明度</a>
-              </div>
-            </div>
-            <div class="footer-col">
-              <h4>加入我们</h4>
-              <div class="links">
-                <a href="https://talent.deepseek.com/" target="_blank" rel="noopener noreferrer">岗位详情</a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="footer-bottom">
-          <div class="icp">
-            <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">浙ICP备2023025841号</a>
-            <a href="https://tsm.miit.gov.cn/dxxzsp/xkz/xkzgl/resource/qiyesearch.jsp?num=%E6%B5%99B2-20250178&amp;type=xuke" target="_blank" rel="noopener noreferrer">浙B2-20250178</a>
-            <a href="https://beian.mps.gov.cn/#/query/webSearch?code=33010502011812" target="_blank" rel="noopener noreferrer">浙公网安备33010502011812号</a>
-          </div>
-          <p class="copyright">© 2026 杭州深度求索人工智能基础技术研究有限公司 版权所有</p>
-        </div>
-      </div>
-    </footer>
   </main>
 
   <div class="toast" id="toast"></div>
@@ -509,6 +419,8 @@
     var $ = function (s) { return document.querySelector(s); };
     var input = $('#kw');
     var sendBtn = $('#send');
+    var output = $('#output');
+    var urlOutput = $('#url-output');
     var tagThink = $('#tagThink');
     var tagSearch = $('#tagSearch');
     var toast = $('#toast');
@@ -516,7 +428,7 @@
     var headerBar = $('#headerBar');
     var playing = false;
     var thinkOn = false;
-    var searchOn = true; // 智能搜索默认选中（与官方一致）
+    var searchOn = false; // 两个开关默认关闭
 
     function tip(msg) {
       toast.textContent = msg;
@@ -534,8 +446,8 @@
     try {
       var sp = new URLSearchParams(location.search);
       query = sp.get('q') || '';
-      if (sp.get('think') === '1') { thinkOn = true; tagThink.classList.add('selected'); }
-      if (sp.get('search') === '0') { searchOn = false; }
+      if (sp.get('think') === 'true') { thinkOn = true; tagThink.classList.add('selected'); }
+      if (sp.get('search') === 'true') { searchOn = true; tagSearch.classList.add('selected'); }
     } catch (e) {}
     if (query) { try { query = decodeURIComponent(query); } catch (e) {} }
     tagSearch.classList.toggle('selected', searchOn);
@@ -543,9 +455,12 @@
     function buildParams(q) {
       var p = new URLSearchParams();
       p.set('q', q);
-      if (thinkOn) p.set('think', '1');
-      if (searchOn) p.set('search', '1');
+      if (thinkOn) p.set('think', 'true');
+      if (searchOn) p.set('search', 'true');
       return p.toString();
+    }
+    function linkFor(q) {
+      return location.href.split('#')[0].split('?')[0] + '?' + buildParams(q);
     }
 
     function moveArrow(el, done) {
@@ -584,12 +499,15 @@
       }, 800);
     }
 
-    // 直接进入对话（与官方一致）
+    // 生成分享链接（无 ?q= 时）
     function submit() {
       if (playing) return;
       var q = input.value.trim();
       if (!q) { tip('搜了个寂寞？'); return; }
-      location.href = 'chat.html?' + buildParams(q);
+      output.style.display = 'block';
+      urlOutput.value = linkFor(q);
+      urlOutput.focus(); urlOutput.select();
+      output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     tagThink.addEventListener('click', function () {
@@ -606,6 +524,15 @@
     sendBtn.addEventListener('click', submit);
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(); }
+    });
+
+    $('#copy').addEventListener('click', function () {
+      navigator.clipboard.writeText(urlOutput.value)
+        .then(function () { tip('复制成功！赶紧把链接甩给伸手党们！'); })
+        .catch(function () { tip('复制失败，请手动复制。'); });
+    });
+    $('#preview').addEventListener('click', function () {
+      if (urlOutput.value) window.open(urlOutput.value);
     });
 
     if (query) playTutorial(query);
