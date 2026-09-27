@@ -1,0 +1,8 @@
+# 本地开发用密钥模板（wrangler dev 会自动读取同目录下的 .dev.vars）
+# 复制为 .dev.vars 后填入真实值；.dev.vars 已被 .gitignore 忽略，不会入库。
+DEEPSEEK_API_KEY=sk-请替换为你的真实密钥
+
+# 以下均为可选，缺省时使用 wrangler.toml / worker.js 中的默认值
+# DEEPSEEK_BASE_URL=https://api.deepseek.com
+# DEEPSEEK_MODEL=deepseek-flash
+# SYSTEM_PROMPT=你是由深度求索公司创造的 AI 助手。请热情、准确、清晰地帮助用户解答问题。
