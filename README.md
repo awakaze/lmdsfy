@@ -106,12 +106,27 @@ python -m http.server 8755
 
 ## 部署
 
+本项目采用 **Cloudflare Git 集成（Workers Builds）** 自动部署：向 `main` 分支 push 即触发构建与发布，无需本地手动执行 deploy。
+
+1. 本地改动提交后 `git push origin main`；
+2. Cloudflare 拉取仓库并执行构建命令 `npx wrangler deploy`，完成后线上 Worker 即为最新版本；
+3. 构建记录可在控制台 **Workers & Pages → lmdsfy → Deployments** 查看。
+
+Cloudflare 侧的一次性配置（在控制台完成）：
+
+1. **Workers & Pages** → 选中 Worker `lmdsfy` → **Settings** → **Builds** → **Connect Git**；
+2. 授权并选择仓库 `awakaze/lmdsfy`、生产分支 `main`；
+3. **Root directory** 留空（仓库根即项目根），**Build command** 填 `npx wrangler deploy`；
+4. 保存后主动 push 一次，即完成首次自动部署并转为 Git 集成模式。
+
+紧急情况仍可本地手动部署（会覆盖同一 Worker）：
+
 ```powershell
 npx wrangler deploy
 ```
 
-- Worker 名 `lmdsfy`、自定义域名 `lmdsfy.awakaze.com` 均已在 Cloudflare 侧配置好，重复部署会覆盖同一 Worker。
-- `DEEPSEEK_API_KEY` 等 secret 存在 **Cloudflare 账户的该 Worker 上**，不在本仓库；更换本地目录或重新克隆都不影响线上，无需重复注入。需要更新时才执行：
+- Worker 名 `lmdsfy`、自定义域名 `lmdsfy.awakaze.com` 均已在 Cloudflare 侧配置好。
+- `DEEPSEEK_API_KEY` 等 secret 存在 **Cloudflare 账户的该 Worker 上**，不在本仓库，Git 集成构建不会覆盖它；更换本地目录或重新克隆都不影响线上，无需重复注入。需要更新时才执行：
 
 ```powershell
 npx wrangler secret put DEEPSEEK_API_KEY
