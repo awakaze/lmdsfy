@@ -270,16 +270,23 @@
     max-width: 92vw; text-align: center;
   }
   .toast.show { opacity: 1; }
+  /* 教程指示器：鼠标指针 + 点击涟漪 */
   #arrow {
-    position: fixed; left: 0; top: 0; width: 44px; height: 44px; pointer-events: none;
+    position: fixed; left: 0; top: 0; width: 16px; height: 24px; pointer-events: none;
     display: none; z-index: 300;
-    transition: left .6s cubic-bezier(.22,.61,.36,1), top .6s cubic-bezier(.22,.61,.36,1);
+    transition: left .9s cubic-bezier(.4,0,.2,1), top .9s cubic-bezier(.4,0,.2,1);
+    filter: drop-shadow(0 3px 8px rgba(30,35,44,.22));
   }
-  #arrow svg {
-    width: 44px; height: 44px; filter: drop-shadow(0 2px 6px rgba(0,0,0,.28));
-    animation: arrow-pulse 1.1s ease-in-out infinite;
+  #arrow svg { display: block; width: 16px; height: 24px; }
+  #arrow .ripple {
+    position: absolute; left: -5px; top: -5px; width: 12px; height: 12px;
+    border-radius: 50%; background: rgba(77,107,254,.45);
+    animation: click-ripple 1.5s ease-out infinite;
   }
-  @keyframes arrow-pulse { 0%,100% { transform: translateY(0); } 50% { transform: translateY(7px); } }
+  @keyframes click-ripple {
+    0%        { transform: scale(.5); opacity: .9; }
+    70%, 100% { transform: scale(2.8); opacity: 0; }
+  }
 
   /* 入场动画 */
   @keyframes rise { to { opacity: 1; transform: translateY(0); } }
@@ -382,11 +389,19 @@
           </div>
 
           <div class="output" id="output">
-            <p class="hint">复制下面的链接，教伸手党使用 DeepSeek</p>
-            <input class="url" id="url-output" readonly />
-            <div class="tool-btns">
-              <button id="copy">复制</button>
-              <button id="preview">预览</button>
+            <div class="out-link" id="outLink">
+              <p class="hint">复制下面的链接，教伸手党使用 DeepSeek</p>
+              <input class="url" id="url-output" readonly />
+              <div class="tool-btns">
+                <button id="copy">复制</button>
+                <button id="preview">预览</button>
+              </div>
+            </div>
+            <div class="out-tut hidden" id="outTut">
+              <p class="hint" id="tutText"></p>
+              <div class="tool-btns">
+                <button id="stopBtn">快停下，我是自己人</button>
+              </div>
             </div>
           </div>
 
@@ -408,9 +423,10 @@
   <div class="toast" id="toast"></div>
 
   <div id="arrow">
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="M12 3v14" stroke="#4d6bfe" stroke-width="3.2" stroke-linecap="round"/>
-      <path d="M6 12l6 6 6-6" stroke="#4d6bfe" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <span class="ripple"></span>
+    <svg viewBox="0 0 16 24" fill="none">
+      <path d="M1.2 1.2 L1.2 20.6 L5.9 15.9 L8.8 22.6 L12.1 21.1 L9.2 14.6 L14.8 14.6 Z"
+            fill="#fff" stroke="#1e232c" stroke-width="1.4" stroke-linejoin="round"/>
     </svg>
   </div>
 
@@ -420,6 +436,10 @@
     var input = $('#kw');
     var sendBtn = $('#send');
     var output = $('#output');
+    var outLink = $('#outLink');
+    var outTut = $('#outTut');
+    var tutText = $('#tutText');
+    var stopBtn = $('#stopBtn');
     var urlOutput = $('#url-output');
     var tagThink = $('#tagThink');
     var tagSearch = $('#tagSearch');
@@ -427,14 +447,41 @@
     var arrow = $('#arrow');
     var headerBar = $('#headerBar');
     var playing = false;
+    var aborted = false;
+    var timers = [];
     var thinkOn = false;
     var searchOn = false; // 两个开关默认关闭
 
+    // 教程动画的定时器统一登记，便于「快停下」时一次性清除
+    function later(fn, ms) { var t = setTimeout(fn, ms); timers.push(t); return t; }
+    function every(fn, ms) { var t = setInterval(fn, ms); timers.push(t); return t; }
+    function clearTimers() {
+      timers.forEach(function (t) { clearTimeout(t); clearInterval(t); });
+      timers = [];
+    }
+
+    // 顶部居中提示（复制结果等）
     function tip(msg) {
       toast.textContent = msg;
       toast.classList.add('show');
       clearTimeout(tip._t);
       tip._t = setTimeout(function () { toast.classList.remove('show'); }, 3200);
+    }
+
+    // 链接输出面板：显示生成的分享链接
+    function showLink(url) {
+      outTut.classList.add('hidden');
+      outLink.classList.remove('hidden');
+      output.style.display = 'block';
+      urlOutput.value = url;
+    }
+
+    // 教程提示：复用链接输出面板的位置（两者不会同时出现）
+    function tutTip(msg) {
+      outLink.classList.add('hidden');
+      outTut.classList.remove('hidden');
+      output.style.display = 'block';
+      tutText.textContent = msg;
     }
 
     // 顶栏滚动态
@@ -466,46 +513,62 @@
     function moveArrow(el, done) {
       arrow.style.display = 'block';
       var r = el.getBoundingClientRect();
-      arrow.style.left = (r.left + r.width / 2 - arrow.offsetWidth / 2) + 'px';
-      arrow.style.top = (r.top + r.height / 2 - arrow.offsetHeight / 2) + 'px';
-      if (done) setTimeout(done, 650);
+      // 让指针尖端（元素左上角）正好落在目标中心
+      arrow.style.left = (r.left + r.width / 2) + 'px';
+      arrow.style.top = (r.top + r.height / 2) + 'px';
+      if (done) later(done, 950);
     }
 
-    // 整蛊教程：字缓慢输入 -> 箭头点向发送 -> 跳转聊天界面
+    // 整蛊教程：字缓慢输入 -> 指针移向发送 -> 跳转聊天界面
     function playTutorial(q) {
       playing = true;
       sendBtn.disabled = true;
-      tip('让我来教你正确的打开方式');
-      setTimeout(function () {
+      tutTip('让我来教你正确的打开方式');
+      later(function () {
         moveArrow(input, function () {
-          tip('1、找到输入框，输入你的问题');
+          if (aborted) return;
+          tutTip('1、找到输入框，输入你的问题');
           var i = 0;
-          var t = setInterval(function () {
+          var t = every(function () {
             input.value = q.slice(0, i + 1);
             i++;
             if (i >= q.length) {
               clearInterval(t);
               moveArrow(sendBtn, function () {
-                tip('2、点击「发送」按钮');
+                if (aborted) return;
+                tutTip('2、点击「发送」按钮');
                 sendBtn.classList.add('pressed');
-                setTimeout(function () {
+                later(function () {
                   location.href = 'chat.html?' + buildParams(q);
-                }, 700);
+                }, 1100);
               });
             }
-          }, 120);
+          }, 180);
           input.focus();
         });
-      }, 800);
+      }, 1100);
     }
+
+    // 自己人快速通道：中断教程，恢复正常页面交互
+    stopBtn.addEventListener('click', function () {
+      if (!playing) return;
+      aborted = true;
+      playing = false;
+      clearTimers();
+      arrow.style.display = 'none';
+      sendBtn.classList.remove('pressed');
+      sendBtn.disabled = false;
+      input.value = query; // 补全被打断的问题，便于直接修改或重新生成链接
+      outTut.classList.add('hidden');
+      output.style.display = '';
+    });
 
     // 生成分享链接（无 ?q= 时）
     function submit() {
       if (playing) return;
       var q = input.value.trim();
       if (!q) { tip('搜了个寂寞？'); return; }
-      output.style.display = 'block';
-      urlOutput.value = linkFor(q);
+      showLink(linkFor(q));
       urlOutput.focus(); urlOutput.select();
       output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
