@@ -7,116 +7,161 @@
 <title>deepseek | 让我帮你问一下</title>
 <link rel="icon" href="https://fe-static.deepseek.com/chat/favicon.svg" />
 <style>
+  /* ==========================================================================
+     设计令牌提取自官方样式表 https://fe-static.deepseek.com/chat/static/main.css
+     （--dsw-static-* / --dsw-alias-* / --dsw-specific-*，此处取其深色模式取值）
+     ========================================================================== */
   :root {
-    --bg: #151517;
-    --bg-sidebar: rgba(0, 0, 0, 0);
-    --bg-elevated: #1f1f21;
-    --bg-input: #2c2c2e;
-    --bg-hover: #262628;
-    --border: #2e2e30;
-    --border-soft: #242426;
-    --text: #f9fafb;
-    --text-secondary: #adaeb8;
-    --text-tertiary: #7d7f86;
-    --accent: #306eff;
-    --accent-hover: #4a80ff;
-    --accent-active: #175cff;
-    --user-bubble: #43454a;
-    --tool-bg: #283142;
-    --tool-active: #679efe;
+    /* 静态色板 */
+    --dsw-static-neutral-bluish-50: #f9fafb;
+    --dsw-static-neutral-bluish-300: #cfd3d6;
+    --dsw-static-neutral-bluish-400: #adb2b8;
+    --dsw-static-neutral-bluish-600: #81858c;
+    --dsw-static-neutral-bluish-700: #61666b;
+    --dsw-static-neutral-bluish-750: #43454a;
+    --dsw-static-neutral-bluish-800: #353638;
+    --dsw-static-neutral-bluish-850: #2c2c2e;
+    --dsw-static-neutral-bluish-875: #232324;
+    --dsw-static-neutral-bluish-900: #1b1b1c;
+    --dsw-static-neutral-bluish-950: #151517;
+    --dsw-static-neutral-600: #545557;
+    --dsw-static-neutral-700: #3c3c3d;
+    --dsw-static-deepseek-400: #679efe;
+    --dsw-static-deepseek-450: #5686fe;
+    --dsw-static-deepseek-500: #3964fe;
+    --dsw-static-deepseek-600: #4868b2;
+    --dsw-static-deepseek-900: #283142;
+
+    /* 语义别名（对应官方 --dsw-alias-*） */
+    --bg: var(--dsw-static-neutral-bluish-950);
+    --bg-sidebar: var(--dsw-static-neutral-bluish-900);
+    --bg-elevated: var(--dsw-static-neutral-bluish-875);
+    --bg-input: var(--dsw-static-neutral-bluish-850);
+    --bg-hover: rgba(255, 255, 255, .08);
+    --nav-hover: var(--dsw-static-neutral-bluish-850);
+    --nav-active: var(--dsw-static-neutral-bluish-750);
+    --border: rgba(255, 255, 255, .12);
+    --border-soft: rgba(255, 255, 255, .06);
+    --text: var(--dsw-static-neutral-bluish-50);
+    --text-secondary: var(--dsw-static-neutral-bluish-300);
+    --text-tertiary: var(--dsw-static-neutral-bluish-400);
+    --text-caption: var(--dsw-static-neutral-bluish-600);
+    --accent: var(--dsw-static-deepseek-450);
+    --accent-hover: var(--dsw-static-deepseek-500);
+    --accent-active: var(--dsw-static-deepseek-600);
+    --user-bubble: var(--dsw-static-neutral-bluish-850);
+    --code-bg: var(--dsw-static-neutral-bluish-900);
+    --code-banner: var(--dsw-static-neutral-bluish-850);
+    --tool-bg: var(--dsw-static-deepseek-900);
+    --tool-active: var(--dsw-static-deepseek-400);
     --radius: 24px;
+    --sider-width: 261px;
+    --msg-max: 840px;
+    --msg-pad: 44px;
+    --font: "quote-cjk-patch", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-code: SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; height: 100%;
     background: var(--bg); color: var(--text);
-    font-family: "quote-cjk-patch", Inter, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+    font-family: var(--font);
     font-size: 14px; line-height: 1.7;
     -webkit-font-smoothing: antialiased;
   }
-  ::selection { background: rgba(48, 110, 255, .35); }
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-thumb { background: #333336; border-radius: 8px; }
-  ::-webkit-scrollbar-thumb:hover { background: #44444a; }
+  ::selection { background: rgba(86, 134, 254, .35); }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--dsw-static-neutral-700); border-radius: 6px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--dsw-static-neutral-600); }
 
   .app { display: flex; height: 100vh; overflow: hidden; }
 
-  /* 侧边栏 */
+  /* 侧边栏 —— 宽 261px，填充色对应 --dsw-specific-sidebar-fill */
   .sidebar {
-    width: 240px; flex: 0 0 240px; min-width: 0;
+    width: var(--sider-width); flex: 0 0 var(--sider-width); min-width: 0;
     background: var(--bg-sidebar); border-right: 1px solid var(--border-soft);
-    display: flex; flex-direction: column; padding: 12px; gap: 6px;
+    display: flex; flex-direction: column; padding: 10px; gap: 4px;
   }
-  .brand { display: flex; align-items: center; gap: 10px; padding: 6px 10px 12px; }
-  .brand .logo { width: 26px; height: 26px; flex: none; }
-  .brand .name { font-size: 19px; font-weight: 700; letter-spacing: -.5px; }
+  .brand { display: flex; align-items: center; gap: 8px; padding: 8px 10px 14px; }
+  .brand .logo { width: 24px; height: 24px; flex: none; }
+  .brand .name { font-size: 20px; font-weight: 600; letter-spacing: -.4px; }
   .new-chat {
     display: flex; align-items: center; justify-content: center; gap: 6px;
-    width: 100%; padding: 10px 0;
-    background: var(--bg-elevated); border: 1px solid var(--border);
-    border-radius: 12px; color: var(--text); font-size: 14px; cursor: pointer;
-    transition: background .15s;
+    width: 100%; height: 40px;
+    background: transparent; border: none;
+    border-radius: 10px; color: var(--text); font-size: 14px; font-family: inherit;
+    cursor: pointer; transition: background .15s;
   }
-  .new-chat:hover { background: var(--bg-hover); }
+  .new-chat:hover { background: var(--nav-hover); }
   .new-chat svg { width: 16px; height: 16px; }
-  .side-section { margin-top: 12px; font-size: 12px; color: var(--text-tertiary); padding: 0 6px; }
+  .side-section { margin-top: 14px; padding: 0 10px 6px; font-size: 12px; color: var(--text-caption); }
   .conv-list { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
   .conv-item {
-    text-align: left; width: 100%; padding: 9px 10px; border-radius: 9px;
+    text-align: left; width: 100%; height: 38px; padding: 0 10px; border-radius: 10px;
     background: transparent; border: none; color: var(--text-secondary);
-    font-size: 14px; cursor: pointer; overflow: hidden;
+    font-size: 14px; font-family: inherit; cursor: pointer; overflow: hidden;
     text-overflow: ellipsis; white-space: nowrap; transition: background .12s;
   }
-  .conv-item:hover { background: var(--bg-hover); }
-  .conv-item.active { background: var(--bg-elevated); color: var(--text); }
-  .side-empty { padding: 18px 8px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
+  .conv-item:hover { background: var(--nav-hover); }
+  .conv-item.active { background: var(--nav-active); color: var(--text); }
+  .side-empty { padding: 18px 8px; text-align: center; color: var(--text-caption); font-size: 13px; }
   .side-footer { margin-top: auto; }
-  .side-user { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; cursor: pointer; }
-  .side-user:hover { background: var(--bg-hover); }
+  .side-user { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 10px; border-radius: 12px; cursor: pointer; }
+  .side-user:hover { background: var(--nav-hover); }
   .avatar {
-    width: 30px; height: 30px; border-radius: 50%; flex: none;
-    background: linear-gradient(135deg, #306eff, #175cff);
+    width: 28px; height: 28px; border-radius: 50%; flex: none;
+    background: linear-gradient(135deg, var(--dsw-static-deepseek-450), var(--dsw-static-deepseek-500));
     display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 13px; font-weight: 700;
+    color: #fff; font-size: 12px; font-weight: 600;
   }
   .side-user .u-name { font-size: 14px; }
 
   /* 主区 */
   .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   .topbar {
-    height: 52px; flex: none; display: flex; align-items: center; gap: 8px;
-    padding: 0 20px; border-bottom: 1px solid var(--border-soft);
-    font-size: 13px; color: var(--text-secondary);
+    height: 56px; flex: none; display: flex; align-items: center;
+    padding: 0 20px;
   }
-  .topbar .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .model-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 10px; border-radius: 10px; border: none; background: transparent;
+    color: var(--text-secondary); font-family: inherit; font-size: 15px; cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .model-pill:hover { background: var(--bg-hover); color: var(--text); }
+  .model-pill svg { width: 14px; height: 14px; }
 
+  /* 消息列表：max-width 840px，左右内边距 44px（官方 --message-list-*） */
   .chat { flex: 1; overflow-y: auto; position: relative; }
-  .chat-inner { max-width: 768px; margin: 0 auto; padding: 24px 24px 40px; }
+  .chat-inner {
+    max-width: calc(var(--msg-max) + var(--msg-pad) * 2);
+    margin: 0 auto; padding: 8px var(--msg-pad) 40px;
+  }
 
-  .welcome { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 9vh; }
-  .welcome .big-logo { width: 64px; height: 64px; margin-bottom: 20px; }
-  .welcome h1 { font-size: 26px; font-weight: 600; margin: 0 0 8px; }
-  .welcome .sub { color: var(--text-secondary); margin: 0 0 32px; font-size: 14px; }
+  .welcome { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 12vh; }
+  .welcome .big-logo { width: 56px; height: 56px; margin-bottom: 18px; }
+  .welcome h1 { font-size: 24px; font-weight: 500; margin: 0 0 6px; letter-spacing: -.2px; }
+  .welcome .sub { color: var(--text-tertiary); margin: 0 0 30px; font-size: 14px; }
   .chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
   .chip {
-    padding: 8px 16px; border-radius: 20px;
-    border: 1px solid var(--border); background: var(--bg-elevated);
-    color: var(--text-secondary); cursor: pointer; transition: all .15s;
+    padding: 9px 16px; border-radius: 12px;
+    border: 1px solid var(--border-soft); background: var(--bg-elevated);
+    color: var(--text-secondary); font-size: 14px; cursor: pointer; transition: all .15s;
   }
-  .chip:hover { border-color: var(--accent); color: var(--text); }
+  .chip:hover { background: var(--nav-active); color: var(--text); }
 
   /* 消息 */
-  .msg { display: flex; gap: 14px; padding: 14px 0; }
-  .msg .ai-avatar { width: 28px; height: 28px; flex: none; margin-top: 3px; }
+  .msg { display: flex; gap: 12px; padding: 12px 0; }
+  .msg .ai-avatar { width: 28px; height: 28px; flex: none; margin-top: 2px; }
   .msg .body { flex: 1; min-width: 0; }
-  .msg .who { font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--text); }
-  .msg.assistant .body { color: var(--text); }
+  .msg .who { font-size: 14px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+  .msg.assistant .body { color: var(--text); font-size: 15px; line-height: 1.75; }
 
-  /* 用户气泡：右侧胶囊 */
-  .msg.user { justify-content: flex-end; padding: 6px 0 10px; }
+  /* 用户气泡：右侧胶囊（官方 --dsw-specific-bubble） */
+  .msg.user { justify-content: flex-end; padding: 12px 0; }
   .msg.user .bubble {
     background: var(--user-bubble); color: var(--text);
-    padding: 9px 16px; border-radius: 18px; max-width: 80%;
+    padding: 10px 16px; border-radius: 16px; max-width: 80%; font-size: 15px;
   }
   .msg.user .bubble .md p { margin: 0; }
 
@@ -128,73 +173,89 @@
   .md h1 { font-size: 20px; } .md h2 { font-size: 18px; } .md h3 { font-size: 16px; }
   .md ul, .md ol { margin: 0 0 12px; padding-left: 22px; }
   .md li { margin: 4px 0; }
-  .md code { font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px; background: var(--bg-elevated); border: 1px solid var(--border-soft); padding: 1px 5px; border-radius: 5px; }
-  .md pre { position: relative; background: #101012; border: 1px solid var(--border-soft); border-radius: 12px; padding: 14px 16px; overflow-x: auto; margin: 0 0 12px; }
-  .md pre code { background: none; border: none; padding: 0; font-size: 13px; line-height: 1.6; }
-  .md pre .copy { position: absolute; top: 8px; right: 8px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary); font-size: 12px; padding: 3px 10px; border-radius: 8px; cursor: pointer; opacity: 0; transition: opacity .15s; }
+  .md code { font-family: var(--font-code); font-size: 13px; background: var(--code-banner); padding: 2px 5px; border-radius: 6px; }
+  .md pre { position: relative; background: var(--code-bg); border: 1px solid var(--border-soft); border-radius: 12px; padding: 14px 16px; overflow-x: auto; margin: 0 0 12px; }
+  .md pre code { background: none; padding: 0; font-size: 13px; line-height: 1.65; }
+  .md pre .copy { position: absolute; top: 8px; right: 8px; background: var(--code-banner); border: none; color: var(--text-tertiary); font-size: 12px; padding: 4px 10px; border-radius: 8px; cursor: pointer; opacity: 0; transition: opacity .15s, color .15s; }
+  .md pre .copy:hover { color: var(--text); }
   .md pre:hover .copy { opacity: 1; }
-  .md blockquote { border-left: 3px solid var(--accent); margin: 0 0 12px; padding: 2px 0 2px 14px; color: var(--text-secondary); }
-  .md table { border-collapse: collapse; margin: 0 0 12px; }
-  .md th, .md td { border: 1px solid var(--border); padding: 6px 12px; }
-  .md th { background: var(--bg-elevated); }
-  .md a { color: var(--accent); text-decoration: none; }
+  .md blockquote { border-left: 3px solid var(--border); margin: 0 0 12px; padding: 2px 0 2px 14px; color: var(--text-secondary); }
+  .md table { border-collapse: collapse; margin: 0 0 12px; font-size: 14px; }
+  .md th, .md td { border: 1px solid var(--border-soft); padding: 8px 14px; }
+  .md th { background: var(--code-banner); font-weight: 600; }
+  .md a { color: var(--dsw-static-deepseek-400); text-decoration: none; }
   .md a:hover { text-decoration: underline; }
 
-  .think { border: 1px solid var(--border-soft); border-radius: 12px; margin-bottom: 14px; background: var(--bg-elevated); }
-  .think summary { list-style: none; cursor: pointer; padding: 10px 14px; color: var(--text-secondary); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  /* 深度思考折叠块 */
+  .think { border: 1px solid var(--border-soft); border-radius: 14px; margin-bottom: 14px; background: var(--bg-elevated); }
+  .think summary { list-style: none; cursor: pointer; padding: 11px 14px; color: var(--text-secondary); font-size: 13px; display: flex; align-items: center; gap: 8px; }
   .think summary::-webkit-details-marker { display: none; }
   .think summary::before { content: "💭"; font-size: 13px; }
   .think summary .lbl::after { content: "深度思考中…"; }
   .think[open] summary .lbl { display: none; }
-  .think[open] summary::after { content: "隐藏思考过程"; margin-left: auto; color: var(--text-tertiary); font-size: 12px; }
-  .think .think-body { padding: 0 14px 14px; color: var(--text-tertiary); font-size: 13px; border-top: 1px solid var(--border-soft); padding-top: 10px; white-space: pre-wrap; }
+  .think[open] summary::after { content: "隐藏思考过程"; margin-left: auto; color: var(--text-caption); font-size: 12px; }
+  .think .think-body { padding: 10px 14px 14px; color: var(--text-tertiary); font-size: 13px; line-height: 1.7; border-top: 1px solid var(--border-soft); white-space: pre-wrap; }
 
   .cursor { display: inline-block; width: 8px; height: 16px; background: var(--accent); vertical-align: -2px; margin-left: 2px; animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
 
-  /* 输入区 */
-  .composer-wrap { flex: none; padding: 0 24px 16px; }
+  /* 输入区：文本框整行在上，工具按钮与发送按钮同处底部一行（与官方布局一致） */
+  .composer-wrap { flex: none; padding: 0 24px 20px; }
   .composer {
-    max-width: 768px; margin: 0 auto;
-    background: var(--bg-input); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 10px 12px 10px 16px;
+    max-width: var(--msg-max); margin: 0 auto;
+    background: var(--bg-input); border: 1px solid transparent;
+    border-radius: var(--radius); padding: 14px 12px 10px 16px;
     transition: border-color .15s, box-shadow .15s;
   }
-  .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(48, 110, 255, .15); }
-  .composer-tools { display: flex; gap: 8px; flex: none; }
+  .composer:focus-within { border-color: var(--accent-active); box-shadow: 0 0 0 3px rgba(86, 134, 254, .12); }
+  .composer textarea {
+    display: block; width: 100%; border: none; outline: none; background: transparent;
+    color: var(--text); font-family: inherit; font-size: 16px; line-height: 1.6;
+    resize: none; max-height: 200px; padding: 0 4px 8px; min-height: 26px;
+  }
+  .composer textarea::placeholder { color: var(--text-caption); }
+  .composer-foot { display: flex; align-items: center; gap: 10px; }
+  .composer-tools { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; }
   .tool-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 5px 12px; border-radius: 18px; border: 1px solid transparent;
-    background: var(--tool-bg); color: var(--text-secondary); font-size: 13px; cursor: pointer;
-    transition: all .15s;
+    display: inline-flex; align-items: center; gap: 6px; height: 32px;
+    padding: 0 12px; border-radius: 16px; border: 1px solid transparent;
+    background: transparent; color: var(--text-secondary); font-family: inherit;
+    font-size: 13px; cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
   }
   .tool-btn svg { width: 14px; height: 14px; }
-  .tool-btn:hover { border-color: #34405a; }
-  .tool-btn.active { color: var(--tool-active); }
-  .tool-btn.disabled { opacity: .55; cursor: not-allowed; }
-  .composer-row { display: flex; gap: 10px; align-items: center; }
-  .composer textarea {
-    flex: 1; border: none; outline: none; background: transparent; color: var(--text);
-    font-family: inherit; font-size: 16px; line-height: 1.6;
-    resize: none; max-height: 200px; padding: 6px 2px; min-height: 28px;
+  .tool-btn:hover { background: var(--bg-hover); }
+  /* 选中态对应官方 --dsw-alias-button-ghost-active-fill / -border */
+  .tool-btn.active {
+    background: var(--tool-bg); border-color: var(--dsw-static-deepseek-600); color: var(--tool-active);
   }
-  .composer textarea::placeholder { color: var(--text-tertiary); }
   .send {
-    width: 36px; height: 36px; border-radius: 50%; border: none;
-    background: var(--accent); color: #fff; cursor: pointer; flex: none;
-    display: flex; align-items: center; justify-content: center; transition: background .15s, opacity .15s;
+    width: 34px; height: 34px; border-radius: 50%; border: none; flex: none;
+    background: var(--accent); color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, opacity .15s;
   }
   .send:hover { background: var(--accent-hover); }
-  .send:disabled { background: #333336; cursor: not-allowed; }
+  .send:disabled { background: var(--nav-active); color: var(--text-caption); cursor: not-allowed; }
   .send svg { width: 18px; height: 18px; }
 
-  .toast { position: fixed; left: 50%; bottom: 130px; transform: translateX(-50%); background: #2e2e30; color: var(--text); padding: 8px 18px; border-radius: 20px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; }
+  .toast {
+    position: fixed; left: 50%; bottom: 130px; transform: translateX(-50%);
+    background: var(--dsw-static-neutral-bluish-750); color: var(--text);
+    padding: 9px 16px; border-radius: 12px; font-size: 13px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .3);
+    opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10;
+  }
   .toast.show { opacity: 1; }
 
-  @media (max-width: 720px) {
+  @media (max-width: 900px) {
     .sidebar { display: none; }
-    .chat-inner, .composer { padding-left: 16px; padding-right: 16px; }
-    .composer { padding-left: 12px; padding-right: 10px; }
+    .chat-inner { padding-left: 20px; padding-right: 20px; }
+    .composer-wrap { padding-left: 16px; padding-right: 16px; }
+  }
+  @media (max-width: 560px) {
+    .composer-tools .lbl { display: none; }
+    .tool-btn { padding: 0 10px; }
   }
 </style>
 </head>
@@ -220,13 +281,18 @@
   </aside>
 
   <div class="main">
-    <div class="topbar"><span class="dot"></span> DeepSeek · 网页版</div>
+    <div class="topbar">
+      <button class="model-pill" type="button">
+        DeepSeek
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+    </div>
 
     <div class="chat" id="chat">
       <div class="chat-inner" id="chatInner">
         <div class="welcome" id="welcome">
           <img class="big-logo" src="https://fe-static.deepseek.com/chat/favicon.svg" alt="deepseek" />
-          <h1>你好，我是 DeepSeek</h1>
+          <h1>我是 DeepSeek，很高兴见到你！</h1>
           <p class="sub">有什么可以帮你的吗？</p>
           <div class="chips" id="chips">
             <span class="chip">帮我写一段代码</span>
@@ -240,18 +306,18 @@
 
     <div class="composer-wrap">
       <div class="composer" id="composer">
-        <div class="composer-row">
+        <textarea id="input" rows="1" placeholder="给 DeepSeek 发送消息"></textarea>
+        <div class="composer-foot">
           <div class="composer-tools">
-            <button class="tool-btn" id="thinkBtn">
+            <button class="tool-btn" id="thinkBtn" type="button">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
-              深度思考
+              <span class="lbl">深度思考</span>
             </button>
-            <button class="tool-btn" id="searchBtn">
+            <button class="tool-btn" id="searchBtn" type="button">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              智能搜索
+              <span class="lbl">智能搜索</span>
             </button>
           </div>
-          <textarea id="input" rows="1" placeholder="给 DeepSeek 发送消息"></textarea>
           <button class="send" id="sendBtn" disabled>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </button>
