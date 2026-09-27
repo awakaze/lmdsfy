@@ -492,8 +492,15 @@
       scrollBottom();
     }
 
+    // 带上本轮及之前的全部历史，实现多轮对话（思考链 reasoning 不回传）
+    const history = conv.messages.map((m) => ({ role: m.role, content: m.content }));
+
     try {
-      const res = await fetch('/api/chat?q=' + encodeURIComponent(q) + (think ? '&think=true' : '') + (search ? '&search=true' : ''));
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history, think: think }),
+      });
       if (!res.ok) {
         const t = await res.text();
         throw new Error(t || ('HTTP ' + res.status));
