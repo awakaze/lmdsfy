@@ -196,6 +196,34 @@
   .think[open] summary::after { content: "隐藏思考过程"; margin-left: auto; color: var(--text-caption); font-size: 12px; }
   .think .think-body { padding: 10px 14px 14px; color: var(--text-tertiary); font-size: 13px; line-height: 1.7; border-top: 1px solid var(--border-soft); white-space: pre-wrap; }
 
+  /* 联网搜索：检索状态与来源卡片 */
+  .search-status { display: flex; align-items: center; gap: 8px; margin: 2px 0 14px; color: var(--text-tertiary); font-size: 13px; }
+  .search-status svg { width: 14px; height: 14px; flex: none; animation: spin 1.2s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .sources { border: 1px solid var(--border-soft); border-radius: 14px; margin-bottom: 14px; background: var(--bg-elevated); }
+  .sources summary { list-style: none; cursor: pointer; padding: 11px 14px; color: var(--text-secondary); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .sources summary::-webkit-details-marker { display: none; }
+  .sources summary svg { width: 14px; height: 14px; flex: none; }
+  .sources summary .more { margin-left: auto; color: var(--text-caption); font-size: 12px; }
+  .sources summary .more::after { content: "展开来源"; }
+  .sources[open] summary .more::after { content: "收起来源"; }
+  .sources .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; padding: 2px 14px 14px; }
+  .source-card {
+    display: flex; gap: 8px; align-items: flex-start; padding: 9px 10px;
+    border: 1px solid var(--border-soft); border-radius: 10px; background: var(--bg-sidebar);
+    text-decoration: none; transition: background .15s;
+  }
+  .source-card:hover { background: var(--nav-hover); }
+  .source-card img { width: 16px; height: 16px; flex: none; border-radius: 4px; margin-top: 2px; }
+  .source-card .sc-txt { min-width: 0; }
+  .source-card .sc-site { font-size: 12px; color: var(--text-caption); line-height: 1.4; }
+  .source-card .sc-title {
+    font-size: 13px; color: var(--text); line-height: 1.45; margin-top: 2px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  sup.cite a { color: var(--dsw-static-deepseek-400); font-size: 11px; text-decoration: none; margin: 0 1px; }
+  sup.cite a:hover { text-decoration: underline; }
+
   .cursor { display: inline-block; width: 8px; height: 16px; background: var(--accent); vertical-align: -2px; margin-left: 2px; animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
 
@@ -404,13 +432,14 @@
     el.innerHTML = '<div class="bubble"><div class="md">' + renderMd(text) + '</div></div>';
     return el;
   }
-  function buildAssistantBlock(content, reasoning) {
+  function buildAssistantBlock(content, reasoning, sources) {
     const el = document.createElement('div');
     el.className = 'msg assistant';
     el.innerHTML =
       '<img class="ai-avatar" src="https://fe-static.deepseek.com/chat/favicon.svg" alt="">' +
       '<div class="body"><div class="who">DeepSeek</div></div>';
     const body = el.querySelector('.body');
+    if (Array.isArray(sources) && sources.length) body.appendChild(buildSourcesPanel(sources, false));
     if (reasoning) {
       const thinkEl = document.createElement('details');
       thinkEl.className = 'think';
@@ -419,10 +448,49 @@
     }
     const md = document.createElement('div');
     md.className = 'md';
-    md.innerHTML = content ? renderMd(content) : '';
+    md.innerHTML = content ? linkCites(renderMd(content), sources || []) : '';
     body.appendChild(md);
     applyCopyButtons(md);
     return el;
+  }
+
+  /* 联网搜索：来源卡片列表（对应官方「已搜索到 N 个网页」折叠块） */
+  function buildSourcesPanel(list, open) {
+    const d = document.createElement('details');
+    d.className = 'sources';
+    if (open) d.open = true;
+    d.innerHTML =
+      '<summary>' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>' +
+      '已搜索到 ' + list.length + ' 个网页' +
+      '<span class="more"></span></summary>' +
+      '<div class="grid"></div>';
+    const grid = d.querySelector('.grid');
+    list.forEach((s) => {
+      const a = document.createElement('a');
+      a.className = 'source-card';
+      a.href = s.url || '#';
+      a.target = '_blank';
+      a.rel = 'noopener';
+      let host = '';
+      try { host = new URL(s.url).hostname.replace(/^www\./, ''); } catch (e) {}
+      a.innerHTML =
+        (s.site_icon ? '<img src="' + esc(s.site_icon) + '" alt="" onerror="this.style.display=\'none\'">' : '') +
+        '<div class="sc-txt"><div class="sc-site">' + esc(s.site_name || host) + '</div>' +
+        '<div class="sc-title">' + esc(s.title || host) + '</div></div>';
+      grid.appendChild(a);
+    });
+    return d;
+  }
+
+  /* 把回答中的 [n] 引用标注替换为可点击的来源角标 */
+  function linkCites(html, sources) {
+    if (!Array.isArray(sources) || !sources.length) return html;
+    return html.replace(/\[(\d{1,2})\]/g, (m, n) => {
+      const s = sources[Number(n) - 1];
+      if (!s || !s.url) return m;
+      return '<sup class="cite"><a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + n + '</a></sup>';
+    });
   }
 
   function openConv(id) {
@@ -431,7 +499,7 @@
     currentId = id;
     chatInner.innerHTML = '';
     c.messages.forEach((m) => {
-      chatInner.appendChild(m.role === 'user' ? buildUserBubble(m.content) : buildAssistantBlock(m.content, m.reasoning));
+      chatInner.appendChild(m.role === 'user' ? buildUserBubble(m.content) : buildAssistantBlock(m.content, m.reasoning, m.sources));
     });
     renderConvList();
     scrollBottom();
@@ -443,7 +511,13 @@
     if (busy || !q.trim()) return;
     busy = true;
     sendBtn.disabled = true;
-    try { history.replaceState(null, '', location.pathname + '?q=' + encodeURIComponent(q)); } catch (e) {}
+    try {
+      const sp = new URLSearchParams();
+      sp.set('q', q);
+      if (think) sp.set('think', 'true');
+      if (search) sp.set('search', 'true');
+      history.replaceState(null, '', location.pathname + '?' + sp.toString());
+    } catch (e) {}
 
     let conv = conversations.find((c) => c.id === currentId);
     if (!conv) {
@@ -471,9 +545,21 @@
     let content = '';
     let reasoning = '';
     let thinkEl = null;
+    let sources = [];
+    let searchStatus = null;
     const cursor = document.createElement('span');
     cursor.className = 'cursor';
     mdEl.appendChild(cursor);
+
+    // 搜索开启时先展示「正在搜索网页…」状态，等后端下发来源后再替换为来源卡片
+    if (search) {
+      searchStatus = document.createElement('div');
+      searchStatus.className = 'search-status';
+      searchStatus.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>' +
+        '<span>正在搜索网页…</span>';
+      body.insertBefore(searchStatus, mdEl);
+    }
 
     function flushThink() {
       if (reasoning && !thinkEl) {
@@ -486,7 +572,7 @@
       if (thinkEl) thinkEl.querySelector('.think-body').textContent = reasoning;
     }
     function flushContent() {
-      mdEl.innerHTML = renderMd(content);
+      mdEl.innerHTML = linkCites(renderMd(content), sources);
       mdEl.appendChild(cursor);
       applyCopyButtons(mdEl);
       scrollBottom();
@@ -499,7 +585,7 @@
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history, think: think }),
+        body: JSON.stringify({ messages: history, think: think, search: search }),
       });
       if (!res.ok) {
         const t = await res.text();
@@ -521,6 +607,17 @@
           if (data === '[DONE]') continue;
           let j;
           try { j = JSON.parse(data); } catch (e) { continue; }
+          // 自定义事件：来源列表先行下发，替换「正在搜索」状态为来源卡片
+          if (j.lmds_search) {
+            sources = Array.isArray(j.lmds_search.results) ? j.lmds_search.results : [];
+            if (searchStatus) {
+              if (sources.length) searchStatus.replaceWith(buildSourcesPanel(sources, true));
+              else searchStatus.remove();
+              searchStatus = null;
+            }
+            scrollBottom();
+            continue;
+          }
           const delta = j.choices && j.choices[0] && j.choices[0].delta;
           if (!delta) continue;
           if (delta.reasoning_content) { reasoning += delta.reasoning_content; flushThink(); }
@@ -528,12 +625,13 @@
         }
       }
     } catch (err) {
+      if (searchStatus) { searchStatus.remove(); searchStatus = null; }
       mdEl.innerHTML = '<p style="color:#e5484d">请求失败：' + esc(String(err.message || err)) + '</p>';
     } finally {
       cursor.remove();
       if (thinkEl) thinkEl.open = false;
       if (content || reasoning) {
-        conv.messages.push({ role: 'assistant', content, reasoning });
+        conv.messages.push({ role: 'assistant', content, reasoning, sources: sources.slice() });
         conv.updatedAt = Date.now();
         persist();
         renderConvList();

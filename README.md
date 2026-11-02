@@ -31,6 +31,7 @@ lmdsfy/
 - **流式输出**：Worker 直连 DeepSeek `/chat/completions`（`stream: true`），SSE 透传，前端逐字渲染。
 - **多轮对话**：聊天页把本地保存的完整消息历史通过 POST 交给后端，模型能记住上下文。
 - **深度思考**：开关映射 DeepSeek 的 `thinking: { type: 'enabled' | 'disabled' }`，思考过程（`reasoning_content`）折叠展示。
+- **智能搜索**：开关映射 DeepSeek Search API（`/v1/tools/search`，与聊天共用同一 Key）。Worker 先检索实时网页并注入上下文，再请求对话；前端展示「正在搜索」状态、来源卡片列表，回答中的 `[1]`、`[2]` 引用可点击跳转原文。
 - **整蛊教程动画**：鼠标指针样式指示器 + 点击涟漪，逐字输入问题后指向发送按钮。
 - **「快停下，我是自己人」**：教程旁路按钮，中断动画并恢复正常页面交互。
 - **本地历史会话**：会话存 localStorage，侧边栏可切换；Markdown 渲染、代码块一键复制。
@@ -41,7 +42,7 @@ lmdsfy/
 |---|---|---|
 | `q` | 要问的问题 | 任意文本（URL 编码） |
 | `think` | 开启深度思考 | `true` / `false`，缺省 `false` |
-| `search` | 开启智能搜索 | `true` / `false`，缺省 `false`（当前仅 UI 占位） |
+| `search` | 开启智能搜索 | `true` / `false`，缺省 `false` |
 
 首页生成的链接形如 `chat.html?q=xxx&think=true`；两个开关默认都**不勾选**。
 
@@ -56,24 +57,32 @@ lmdsfy/
     { "role": "assistant", "content": "你好！有什么可以帮你的？" },
     { "role": "user", "content": "那它呢？" }
   ],
-  "think": false
+  "think": false,
+  "search": false
 }
 ```
 
-返回 `text/event-stream`，原样透传 DeepSeek 的 SSE 分片。后端会：
+返回 `text/event-stream`。后端会：
 
 - 在最前面拼接 `SYSTEM_PROMPT`（system 消息）；
+- `search` 开启时，取最后一条 user 消息作为搜索词调 DeepSeek Search API（`POST /v1/tools/search`，`count: 8`），把结构化结果注入 system 上下文，并要求模型用 `[编号]` 标注来源；搜索失败或无结果时自动降级为普通对话；
 - 只保留 `user` / `assistant` 的纯文本内容，**思考链 `reasoning` 不回传**给模型；
 - 按 `think` 显式设置 `thinking`（DeepSeek 默认开启思考，关闭时必须显式 `disabled`）。
 
-### `GET /api/chat?q=xxx&think=true`（单轮）
+SSE 流中除 DeepSeek 原生分片外，还有一条自定义首事件，携带来源列表供前端渲染来源卡片：
+
+```json
+{ "lmds_search": { "query": "…", "results": [ { "title": "…", "url": "…", "site_name": "…", "site_icon": "…", "snippet": "…", "date": "…" } ] } }
+```
+
+### `GET /api/chat?q=xxx&think=true&search=true`（单轮）
 
 兼容直链的简化入口，等价于只传一条 user 消息。
 
 ## 技术实现
 
 - **后端**：Cloudflare Worker（`worker.js`）
-  - `/api/chat` → 转发 DeepSeek 并 SSE 流式回传
+  - `/api/chat` → 转发 DeepSeek 并 SSE 流式回传；`search` 开启时先调 DeepSeek Search API（`POST /v1/tools/search`，5 元/千次，仅成功且有结果的请求计费）
   - 其余路径 → `env.ASSETS.fetch()` 交给 `public/` 静态资源
 - **前端**：原生 HTML/CSS/JS 单文件页，无构建步骤；Markdown 用 `marked`（CDN）。两页的配色/圆角/尺寸令牌均从官方样式表提取（首页取 www.deepseek.com，聊天页取 chat.deepseek.com 的 `--dsw-*` 令牌）。
 - **模型**：默认 `deepseek-flash`，即 **DeepSeek-V4.1-Flash**（官方推荐模型名）。
@@ -134,6 +143,5 @@ npx wrangler secret put DEEPSEEK_API_KEY
 
 ## 已知限制
 
-- **智能搜索未真正接入**：DeepSeek API 无内置联网搜索，需通过 Function Calling 集成第三方搜索 API（如 Bing / Serper）后 `search` 才会生效，当前仅切换前端按钮状态。
 - **历史不截断**：多轮会把全部历史发给模型，超长对话可能触达 DeepSeek 上下文上限，后续可加滑动窗口截断。
 - **免费档配额**：Cloudflare 免费 Worker 为 10ms CPU/请求，等待 DeepSeek 的 I/O 时间不计入 CPU，流式透传几乎不耗 CPU，常规使用足够。
