@@ -93,3 +93,59 @@ body { overflow: hidden; }
   .msg.assistant .body { font-size: 15px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Measured from the signed-in official client on 2026-11-14. */
+:root { --sider-width: 261px; --msg-max: 776px; }
+.sidebar { padding: 6px 12px 0; }
+.brand { height: 52px; padding: 0 4px; }
+.brand .name { font-size: 23px; }
+.brand .logo { width: 26px; height: 26px; }
+#sideCollapse { margin-left: auto; }
+.new-chat { margin-top: 12px; font-size: 14px; }
+.topbar { padding: 0 16px; height: 64px; justify-content: flex-start; }
+.top-logo { width: 28px; height: 28px; margin-right: 12px; display: none; }
+.header-tools { display: none; align-items: center; gap: 2px; background: var(--bg-input); padding: 2px; border: 1px solid var(--border); border-radius: 24px; }
+.header-tools .icon-btn { width: 34px; height: 34px; }
+#sidebarToggle { display: inline-flex; }
+.sidebar-collapsed .sidebar { display: none; }
+.sidebar-collapsed .main.empty .topbar { left: 0; }
+.sidebar-collapsed .top-logo, .sidebar-collapsed .header-tools { display: flex; }
+.side-settings { display: flex; align-items: center; gap: 10px; width: 100%; height: 48px; padding: 0 12px; border: none; border-radius: 12px; background: transparent; color: var(--text-secondary); font: inherit; cursor: pointer; }
+.side-settings:hover { background: var(--bg-hover); }
+.side-settings svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+.main.empty { padding-bottom: 64px; }
+.main.empty .chat-inner { margin: 0; padding: 0 32px 32px; max-width: none; }
+.welcome { flex-direction: row; gap: 10px; justify-content: center; }
+.welcome .big-logo { width: 34px; height: 28px; margin: 0; }
+.welcome h1 { font-size: 24px; font-weight: 600; line-height: 28px; }
+.composer-wrap { width: 100%; max-width: 840px; align-self: center; padding: 10px 32px 0; }
+.main.empty .composer-wrap { padding-top: 0; }
+.composer { padding: 4px 0 0; border-color: var(--border-soft); }
+.composer textarea { min-height: 60px; line-height: 24px; padding: 12px 12px 0 16px; }
+.composer-foot { padding: 12px; min-height: 58px; }
+.composer-tools .tool-btn { font-size: 13px; }
+.composer-tools .tool-btn svg { width: 16px; height: 16px; }
+.composer-tools .tool-btn.active { border-color: transparent; }
+.attachments { padding: 8px 12px; }
+.main.empty .disclaimer { display: none; }
+.chat-inner { max-width: 840px; padding: 20px 44px 32px; margin: 0 auto; width: 100%; }
+.history-search { width: min(600px, calc(100vw - 32px)); padding: 20px; border: 1px solid var(--border); border-radius: 20px; background: var(--bg); color: var(--text); }
+.history-search::backdrop { background: #0006; }
+.search-heading { display: flex; justify-content: space-between; align-items: center; font-size: 16px; margin-bottom: 12px; }
+.history-search input { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: var(--text); font: inherit; }
+#historyResults { max-height: 50vh; overflow: auto; padding-top: 12px; }
+#historyResults button { display: block; width: 100%; text-align: left; border: 0; padding: 10px; border-radius: 8px; background: transparent; color: var(--text); font: inherit; cursor: pointer; }
+#historyResults button:hover { background: var(--bg-hover); }
+@media (max-width: 1023px) { .composer-wrap { max-width: 712px; } .chat-inner { max-width: 712px; padding-left: 36px; padding-right: 36px; } }
+@media (max-width: 900px) {
+  .header-tools, .top-logo { display: flex; }
+  .sidebar-collapsed .sidebar { display: flex; }
+}
+@media (max-width: 560px) {
+  .composer-wrap { padding-left: 16px; padding-right: 16px; }
+  .chat-inner { padding-left: 20px; padding-right: 20px; }
+  .welcome h1 { font-size: 20px; }
+  .welcome .big-logo { width: 28px; height: 24px; }
+  .main.empty .chat-inner { padding-left: 16px; padding-right: 16px; }
+}
+@media (max-width: 439px) { .composer textarea { min-height: 42px; } }
