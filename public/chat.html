@@ -540,7 +540,7 @@
     copy.onclick = () => navigator.clipboard.writeText(content).then(() => showToast('已复制')).catch(() => showToast('复制失败'));
     const read = actionButton('朗读', '<g class="speech-ready"><path d="m11 4-6 5H2v6h3l6 5V4Z"/><path d="M15 8a6 6 0 010 8M18 5a10 10 0 010 14"/></g><rect class="speech-stop" x="6" y="6" width="12" height="12" rx="2"/>');
     read.className = 'speech-button'; read.disabled = !content;
-    read.onclick = () => media.speak(content, read);
+    read.onclick = () => { if (document.documentElement.dataset.ttsEnabled === 'true') media.speak(content, read); };
     const retry = actionButton('重新生成', '<path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0112-1l2 3M4 15l2 3a7 7 0 0012-1"/>');
     retry.onclick = () => {
       if (busy || !conv) return;
@@ -914,6 +914,10 @@
   setTheme(savedTheme);
   $('#themeToggle').onclick = () => setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
   /* ===== 初始化 ===== */
+  fetch('/api/config', { cache: 'no-store' })
+    .then(res => { if (!res.ok) throw new Error('配置读取失败'); return res.json(); })
+    .then(config => { document.documentElement.dataset.ttsEnabled = String(config.ttsEnabled === true); })
+    .catch(() => { document.documentElement.dataset.ttsEnabled = 'false'; });
   renderConvList();
   const initParams = new URLSearchParams(location.search);
   if (initParams.get('think') === 'true') { think = true; thinkBtn.classList.add('active'); }

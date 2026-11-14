@@ -165,3 +165,7 @@ body { overflow: hidden; }
 .speech-playing { color: var(--accent) !important; }
 
 .speech-loading svg { display: none; }
+
+/* Keep paid speech hidden until this deployment explicitly reports support. */
+.answer-actions .speech-button { display: none; }
+html[data-tts-enabled="true"] .answer-actions .speech-button { display: inline-flex; }

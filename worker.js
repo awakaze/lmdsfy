@@ -1,5 +1,5 @@
 /** Cloudflare Worker: DeepSeek 原生网页工具及流式聊天。 */
-import { handleMedia } from './media-worker.js';
+import { handleMedia, isTtsEnabled } from './media-worker.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +20,10 @@ export default {
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: CORS });
+    }
+
+    if (url.pathname === '/api/config' && request.method === 'GET') {
+      return Response.json({ ttsEnabled: isTtsEnabled(env) }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
     if (url.pathname === '/api/chat') {

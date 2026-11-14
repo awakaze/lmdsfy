@@ -5,6 +5,21 @@ import vm from 'node:vm';
 import { handleMedia } from '../media-worker.js';
 import worker from '../worker.js';
 
+test('deployment switch blocks paid speech before any upstream call', async () => {
+  const original = globalThis.fetch; let calls = 0;
+  globalThis.fetch = async () => { calls++; return new Response('unexpected'); };
+  try {
+    const env = { DEEPSEEK_API_KEY: 'secret', TTS_ENABLED: 'false' };
+    const res = await worker.fetch(new Request('https://local/api/speech', { method: 'POST', body: JSON.stringify({ text: 'test' }) }), env);
+    assert.equal(res.status, 403); assert.equal(calls, 0);
+    const config = await worker.fetch(new Request('https://local/api/config'), env);
+    assert.equal((await config.json()).ttsEnabled, false);
+    assert.equal(config.headers.get('Cache-Control'), 'no-store');
+    const other = await worker.fetch(new Request('https://local/api/config'), {});
+    assert.equal((await other.json()).ttsEnabled, true);
+  } finally { globalThis.fetch = original; }
+});
+
 test('file uploads preserve multipart order and bytes without buffering', async () => {
   const original = globalThis.fetch;
   let forwarded;

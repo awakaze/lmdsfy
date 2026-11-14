@@ -17,3 +17,5 @@ binding = "ASSETS"
 [vars]
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEEPSEEK_MODEL = "deepseek-flash"
+# 当前 Cloudflare 部署关闭付费朗读。其他部署可设为 "true"。
+TTS_ENABLED = "false"

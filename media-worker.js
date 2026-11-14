@@ -1,6 +1,13 @@
 // Keep uploads streaming: buffering large documents can exceed Worker memory.
+export function isTtsEnabled(env) {
+  return env.TTS_ENABLED !== 'false' && env.TTS_ENABLED !== false;
+}
+
 export async function handleMedia(request, env, pathname) {
   if (request.method !== 'POST') return new Response('不支持的请求方法', { status: 405 });
+  if (pathname === '/api/speech' && !isTtsEnabled(env)) {
+    return new Response('当前部署已关闭朗读功能', { status: 403, headers: { 'Cache-Control': 'no-store' } });
+  }
   if (!env.DEEPSEEK_API_KEY) return new Response('服务端未配置 DeepSeek 密钥', { status: 503 });
   const base = (env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com').replace(/\/+$/, '');
   const root = base.replace(/\/v1$/, '');
