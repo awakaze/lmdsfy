@@ -165,3 +165,7 @@ npx wrangler secret put DEEPSEEK_API_KEY
 参考：[文件 API](https://api-docs.deepseek.com/guides/files_api/)、[语音识别](https://api-docs.deepseek.com/guides/asr/)、[语音合成](https://api-docs.deepseek.com/guides/tts/)。
 
 开发：`npm ci` 后运行 `npm run dev`；检查：`npm test` 和 `npx wrangler deploy --dry-run`。推送 main 后由现有 Cloudflare Workers Builds 自动发布。
+
+### 回答版本与朗读兼容
+
+重新生成会保留旧回答及其后续追问，通过回答下方的左右箭头切换版本；版本与各自分支随本地历史保存。生成失败不会截断旧对话。复制、朗读、重新生成使用图标，名称通过悬停提示和无障碍标签提供。朗读会修复流式 WAV 的未知长度字段，并在用户点击时启用音频上下文；加载、播放、停止各有对应图标状态。

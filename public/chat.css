@@ -149,3 +149,19 @@ body { overflow: hidden; }
   .main.empty .chat-inner { padding-left: 16px; padding-right: 16px; }
 }
 @media (max-width: 439px) { .composer textarea { min-height: 42px; } }
+
+/* Reply tools keep their SVGs while labels and playback state change. */
+.answer-actions { gap: 4px; align-items: center; }
+.answer-actions button { width: 30px; height: 30px; padding: 5px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; }
+.answer-actions button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.answer-actions button:disabled { opacity: .35; cursor: default; }
+.version-nav { display: flex; align-items: center; gap: 2px; margin-right: 6px; color: var(--text-tertiary); font-size: 12px; }
+.version-nav button { width: 24px; }
+.speech-stop { display: none; }
+.speech-playing .speech-ready, .speech-loading .speech-ready { display: none; }
+.speech-playing .speech-stop { display: block; fill: currentColor; stroke: none; }
+.speech-loading { position: relative; }
+.speech-loading::after { content: ''; width: 13px; height: 13px; border: 1.6px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+.speech-playing { color: var(--accent) !important; }
+
+.speech-loading svg { display: none; }

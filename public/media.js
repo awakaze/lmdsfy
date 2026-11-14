@@ -99,37 +99,64 @@ window.createChatMedia = function ({ onChange, onTranscript, notify }) {
     } catch (e) { notify('语音识别失败：' + e.message); }
     finally { starting = false; changed(); }
   }
+  function speechState(button, state) {
+    const label = state === 'loading' ? '正在生成语音，点击取消' : state === 'playing' ? '停止朗读' : '朗读';
+    button.setAttribute('aria-label', label); button.setAttribute('title', label);
+    button.setAttribute('aria-pressed', String(state !== 'idle'));
+    button.classList.toggle('speech-loading', state === 'loading');
+    button.classList.toggle('speech-playing', state === 'playing');
+  }
   function stopSpeech() {
     if (!speech) return;
-    speech.controller.abort(); speech.audio?.pause(); speech.finish?.();
-    if (speech.url) URL.revokeObjectURL(speech.url);
-    speech.button.textContent = '朗读'; speech = null;
+    const state = speech; speech = null;
+    state.controller.abort();
+    try { state.source?.stop(); } catch (_) {}
+    state.audio?.pause(); state.finish?.();
+    if (state.context) state.context.close().catch(() => {});
+    if (state.url) URL.revokeObjectURL(state.url);
+    speechState(state.button, 'idle');
   }
   async function speak(text, button) {
     if (speech?.button === button) { stopSpeech(); return; }
     stopSpeech();
-    const state = { controller: new AbortController(), button, audio: null, url: null };
-    speech = state; button.textContent = '停止朗读';
-    // Split long replies below the API's 10,000 billed-character limit.
-    const chars = Array.from(text);
+    const state = { controller: new AbortController(), button, audio: null, url: null, context: null };
+    speech = state; speechState(button, 'loading');
+    // Resume synchronously within the click gesture, before the network wait.
+    const AudioEngine = window.AudioContext || window.webkitAudioContext;
+    let unlocked;
     try {
+      if (AudioEngine) { state.context = new AudioEngine(); unlocked = state.context.resume().then(() => null, error => error); }
+      const chars = Array.from(text);
       for (let i = 0; i < chars.length; i += 4000) {
+        speechState(button, 'loading');
         const res = await fetch('/api/speech', { method: 'POST', signal: state.controller.signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: chars.slice(i, i + 4000).join('') }) });
         if (!res.ok) throw new Error(await errorText(res));
-        const blob = await res.blob();
+        const blob = await normalizeSpeechAudio(await res.blob());
         if (state.controller.signal.aborted) break;
-        state.url = URL.createObjectURL(blob); state.audio = new Audio(state.url);
-        await new Promise((resolve, reject) => {
-          state.finish = resolve;
-          state.audio.onended = resolve;
-          state.audio.onerror = () => reject(new Error('音频播放失败'));
-          state.audio.play().catch(reject);
-        });
-        URL.revokeObjectURL(state.url); state.url = null;
+        if (state.context) {
+          const unlockError = await unlocked;
+          if (unlockError) throw unlockError;
+          const buffer = await state.context.decodeAudioData(await blob.arrayBuffer());
+          if (state.controller.signal.aborted) break;
+          const source = state.context.createBufferSource(); state.source = source;
+          source.buffer = buffer; source.connect(state.context.destination);
+          speechState(button, 'playing');
+          await new Promise(resolve => { state.finish = resolve; source.onended = resolve; source.start(); });
+          source.disconnect?.(); state.source = null;
+        } else {
+          state.url = URL.createObjectURL(blob); state.audio = new Audio(state.url);
+          await new Promise((resolve, reject) => {
+            state.finish = resolve; state.audio.onended = resolve;
+            state.audio.onerror = () => reject(new Error('音频播放失败'));
+            state.audio.play().then(() => speechState(button, 'playing')).catch(reject);
+          });
+          URL.revokeObjectURL(state.url); state.url = null;
+        }
         if (state.controller.signal.aborted) break;
       }
-    } catch (e) { if (e.name !== 'AbortError') notify('朗读失败：' + e.message); }
-    finally { if (speech === state) stopSpeech(); }
+    } catch (e) {
+      if (e.name !== 'AbortError' && !state.controller.signal.aborted) notify(e.name === 'NotAllowedError' ? '浏览器阻止了声音播放，请允许此网站播放声音后重试' : '朗读失败：' + e.message);
+    } finally { if (speech === state) stopSpeech(); }
   }
   window.addEventListener('pagehide', () => { stopSpeech(); if (recording) { recording.stream.getTracks().forEach(t => t.stop()); recording.context.close(); } files.forEach(f => f.cancel?.()); });
   return { upload, remove, take, toggleRecording, speak, stopSpeech, get pending() { return files; }, get active() { return Boolean(recording || starting); } };
@@ -146,4 +173,25 @@ function encodeWav(chunks, samples, sampleRate) {
   let offset = 44;
   for (const chunk of chunks) for (const value of chunk) { const n = Math.max(-1, Math.min(1, value)); view.setInt16(offset, n < 0 ? n * 32768 : n * 32767, true); offset += 2; }
   return new Blob([bytes], { type: 'audio/wav' });
+}
+
+// The TTS stream uses 0xffffffff for unknown RIFF/data lengths. Once fully
+// downloaded, replace these placeholders so browser decoders can play it.
+async function normalizeSpeechAudio(blob) {
+  const bytes = await blob.arrayBuffer();
+  if (bytes.byteLength < 12) throw new Error('语音数据不完整');
+  const view = new DataView(bytes);
+  const tag = offset => String.fromCharCode(...new Uint8Array(bytes, offset, 4));
+  if (tag(0) !== 'RIFF' || tag(8) !== 'WAVE') throw new Error('语音服务返回了无效的 WAV 音频');
+  view.setUint32(4, bytes.byteLength - 8, true);
+  for (let offset = 12; offset + 8 <= bytes.byteLength;) {
+    const size = view.getUint32(offset + 4, true);
+    if (tag(offset) === 'data') {
+      if (size === 0xffffffff || size > bytes.byteLength - offset - 8) view.setUint32(offset + 4, bytes.byteLength - offset - 8, true);
+      return new Blob([bytes], { type: 'audio/wav' });
+    }
+    if (size > bytes.byteLength - offset - 8) break;
+    offset += 8 + size + (size % 2);
+  }
+  throw new Error('语音数据缺少音频内容');
 }

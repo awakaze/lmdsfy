@@ -378,6 +378,7 @@
 <script src="/vendor/marked.min.js"></script>
 <script src="/vendor/purify.min.js"></script>
 <script src="/media.js"></script>
+<script src="/history.js"></script>
 <script>
 (function () {
   const $ = (s) => document.querySelector(s);
@@ -512,18 +513,42 @@
     }
     return el;
   }
+  function actionButton(label, paths) {
+    const button = document.createElement('button'); button.type = 'button';
+    button.setAttribute('aria-label', label); button.title = label;
+    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + paths + '</svg>';
+    return button;
+  }
   function addAnswerActions(el, content, conv, index) {
-    if (!content || el.querySelector('.answer-actions')) return;
+    const message = conv?.messages[index];
+    if ((!content && !message?.variants) || el.querySelector('.answer-actions')) return;
     const bar = document.createElement('div'); bar.className = 'answer-actions';
-    const copy = document.createElement('button'); copy.textContent = '复制'; copy.onclick = () => navigator.clipboard.writeText(content).then(() => showToast('已复制')).catch(() => showToast('复制失败'));
-    const read = document.createElement('button'); read.textContent = '朗读'; read.onclick = () => media.speak(content, read);
-    const retry = document.createElement('button'); retry.textContent = '重新生成'; retry.onclick = () => {
+    if (message?.variants?.length > 1) {
+      const nav = document.createElement('div'); nav.className = 'version-nav';
+      const current = message.variantIndex || 0;
+      const previous = actionButton('上一个回答', '<path d="m14 6-6 6 6 6"/>');
+      const next = actionButton('下一个回答', '<path d="m10 6 6 6-6 6"/>');
+      previous.disabled = current === 0; next.disabled = current === message.variants.length - 1;
+      const label = document.createElement('span'); label.textContent = (current + 1) + ' / ' + message.variants.length;
+      label.setAttribute('aria-label', '回答版本');
+      const select = target => { if (busy) return; media.stopSpeech(); ChatHistory.selectVersion(conv, index, target); persist(); openConv(conv.id); };
+      previous.onclick = () => select(current - 1); next.onclick = () => select(current + 1);
+      nav.append(previous, label, next); bar.append(nav);
+    }
+    const copy = actionButton('复制', '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 00-2-2H5a2 2 0 00-2 2v9a2 2 0 002 2h3"/>');
+    copy.disabled = !content;
+    copy.onclick = () => navigator.clipboard.writeText(content).then(() => showToast('已复制')).catch(() => showToast('复制失败'));
+    const read = actionButton('朗读', '<g class="speech-ready"><path d="m11 4-6 5H2v6h3l6 5V4Z"/><path d="M15 8a6 6 0 010 8M18 5a10 10 0 010 14"/></g><rect class="speech-stop" x="6" y="6" width="12" height="12" rx="2"/>');
+    read.className = 'speech-button'; read.disabled = !content;
+    read.onclick = () => media.speak(content, read);
+    const retry = actionButton('重新生成', '<path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0112-1l2 3M4 15l2 3a7 7 0 0012-1"/>');
+    retry.onclick = () => {
       if (busy || !conv) return;
-      const userIndex = conv.messages.slice(0, index).findLastIndex(m => m.role === 'user');
-      if (userIndex < 0) return;
-      const user = conv.messages[userIndex];
-      conv.messages = conv.messages.slice(0, userIndex); persist(); openConv(conv.id);
-      sendQuestion(user.content, user.attachments || []);
+      const pending = ChatHistory.prepareRegeneration(conv, index);
+      const user = pending.prefix.findLast(m => m.role === 'user');
+      if (!user) return;
+      openConv(conv.id, pending.prefix);
+      sendQuestion(user.content, user.attachments || [], pending);
     };
     bar.append(copy, read, retry); el.querySelector('.body').append(bar);
   }
@@ -607,7 +632,7 @@
     return window.DOMPurify ? DOMPurify.sanitize(html, { ADD_ATTR: ['target'] }) : html;
   }
 
-  function openConv(id) {
+  function openConv(id, viewMessages = null) {
     if (busy) return;
     const c = conversations.find((x) => x.id === id);
     if (!c) return;
@@ -616,7 +641,7 @@
     $('.main').classList.remove('empty');
     currentId = id;
     chatInner.innerHTML = '';
-    c.messages.forEach((m, index) => {
+    (viewMessages || c.messages).forEach((m, index) => {
       const el = m.role === 'user' ? buildUserBubble(m.content, m.attachments) : buildAssistantBlock(m.content, m.reasoning, m.sources, m.annotations);
       chatInner.appendChild(el);
       if (m.role === 'assistant') addAnswerActions(el, m.content, c, index);
@@ -627,7 +652,7 @@
   }
 
   /* ===== 提问 ===== */
-  async function sendQuestion(q, attachments = []) {
+  async function sendQuestion(q, attachments = [], regeneration = null) {
     if (busy || !q.trim()) return;
     media.stopSpeech();
     $('.main').classList.remove('empty');
@@ -651,13 +676,13 @@
       conversations.push(conv);
       currentId = conv.id;
     }
-    conv.messages.push({ role: 'user', content: q, attachments });
+    if (!regeneration) conv.messages.push({ role: 'user', content: q, attachments });
     conv.updatedAt = Date.now();
     persist();
     renderConvList();
 
     if (welcome && welcome.parentNode) welcome.style.display = 'none';
-    chatInner.appendChild(buildUserBubble(q, attachments));
+    if (!regeneration) chatInner.appendChild(buildUserBubble(q, attachments));
 
     const el = document.createElement('div');
     el.className = 'msg assistant';
@@ -709,7 +734,7 @@
     }
 
     // 保留网页工具签名，使后续追问能够引用已读网页。
-    const history = conv.messages.map((m) => ({ role: m.role, content: m.role === 'user' && m.attachments?.length ? [{ type: 'text', text: m.content }, ...m.attachments.map(f => ({ type: 'file', file_id: f.id }))] : m.content, ...(m.server_tool_calls ? { server_tool_calls: m.server_tool_calls } : {}) }));
+    const history = (regeneration ? regeneration.prefix : conv.messages).map((m) => ({ role: m.role, content: m.role === 'user' && m.attachments?.length ? [{ type: 'text', text: m.content }, ...m.attachments.map(f => ({ type: 'file', file_id: f.id }))] : m.content, ...(m.server_tool_calls ? { server_tool_calls: m.server_tool_calls } : {}) }));
 
     try {
       const res = await fetch('/api/chat', {
@@ -790,7 +815,9 @@
       cursor.remove();
       if (thinkEl) thinkEl.open = false;
       if (content || reasoning) {
-        conv.messages.push({ role: 'assistant', content, reasoning, sources: sources.slice(), annotations, server_tool_calls });
+        const reply = { role: 'assistant', content, reasoning, sources: sources.slice(), annotations, server_tool_calls };
+        if (regeneration) ChatHistory.commitRegeneration(conv, regeneration, reply);
+        else conv.messages.push(reply);
         conv.updatedAt = Date.now();
         persist();
         renderConvList();
@@ -799,7 +826,8 @@
       busy = false;
       $('#uploadBtn').disabled = false; $('#micBtn').disabled = false;
       if (thinkEl) thinkEl.classList.add('done');
-      addAnswerActions(el, content, conv, conv.messages.length - 1);
+      if (regeneration) { openConv(conv.id); if (!content && !reasoning) showToast('未生成新回答，已保留原来的记录'); }
+      else addAnswerActions(el, content, conv, conv.messages.length - 1);
       updateSend();
     }
   }

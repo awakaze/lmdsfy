@@ -66,3 +66,75 @@ test('microphone samples become valid mono PCM16 WAV accepted by ASR', async () 
   assert.equal(data.getUint32(24, true), 16000); assert.equal(data.getUint16(22, true), 1);
   assert.equal(data.getInt16(44, true), -32768); assert.equal(data.getInt16(48, true), 32767);
 });
+
+function streamingWav() {
+  const wav = Buffer.alloc(364);
+  wav.write('RIFF'); wav.writeUInt32LE(0xffffffff, 4); wav.write('WAVEfmt ', 8);
+  wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22);
+  wav.writeUInt32LE(16000, 24); wav.writeUInt32LE(32000, 28);
+  wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34);
+  wav.write('data', 36); wav.writeUInt32LE(0xffffffff, 40);
+  return wav;
+}
+
+test('speech fixes unknown WAV lengths before playback and preserves the button icon', async () => {
+  const blobs = new Map(); const errors = []; let played = 0;
+  class Audio {
+    constructor(url) { this.url = url; }
+    async play() {
+      const bytes = await blobs.get(this.url).arrayBuffer(); const view = new DataView(bytes);
+      assert.equal(view.getUint32(4, true), bytes.byteLength - 8);
+      assert.equal(view.getUint32(40, true), bytes.byteLength - 44);
+      played++; queueMicrotask(() => this.onended());
+    }
+    pause() {}
+  }
+  const button = { innerHTML: '<svg></svg>', textContent: '', setAttribute() {}, classList: { toggle() {} } };
+  const context = vm.createContext({ window: { addEventListener() {} }, Blob, ArrayBuffer, DataView, AbortController, Audio, queueMicrotask,
+    URL: { createObjectURL(blob) { blobs.set('blob:test', blob); return 'blob:test'; }, revokeObjectURL() {} },
+    fetch: async () => new Response(streamingWav(), { headers: { 'Content-Type': 'audio/wav' } }),
+  });
+  vm.runInContext(fs.readFileSync(new URL('../public/media.js', import.meta.url), 'utf8'), context);
+  const media = context.window.createChatMedia({ onChange() {}, onTranscript() {}, notify: e => errors.push(e) });
+  await media.speak('hello', button);
+  assert.equal(played, 1, errors.join(','));
+  assert.equal(button.textContent, '');
+  assert.equal(button.innerHTML, '<svg></svg>');
+});
+
+test('speech unlocks audio during the click before waiting for synthesis', async () => {
+  let unlocked = false, started = 0, closed = 0;
+  class AudioContext {
+    resume() { unlocked = true; return Promise.resolve(); }
+    decodeAudioData() { return Promise.resolve({}); }
+    createBufferSource() { const source = { connect() {}, start() { started++; queueMicrotask(() => source.onended()); }, stop() {} }; return source; }
+    close() { closed++; return Promise.resolve(); }
+  }
+  const context = vm.createContext({ window: { AudioContext, addEventListener() {} }, Blob, ArrayBuffer, DataView, AbortController,
+    fetch: async () => { assert.equal(unlocked, true, 'audio was not unlocked before the request'); return new Response(streamingWav(), { headers: { 'Content-Type': 'audio/wav' } }); },
+  });
+  vm.runInContext(fs.readFileSync(new URL('../public/media.js', import.meta.url), 'utf8'), context);
+  const errors = [];
+  const media = context.window.createChatMedia({ onChange() {}, onTranscript() {}, notify: e => errors.push(e) });
+  await media.speak('hello', { setAttribute() {}, classList: { toggle() {} } });
+  assert.equal(started, 1, errors.join(',')); assert.equal(closed, 1);
+});
+
+test('cancelling synthesis releases audio and never starts late playback', async () => {
+  let resolveRequest, played = 0, closed = 0;
+  class AudioContext {
+    resume() { return Promise.resolve(); }
+    decodeAudioData() { played++; return Promise.resolve({}); }
+    close() { closed++; return Promise.resolve(); }
+  }
+  const context = vm.createContext({ window: { AudioContext, addEventListener() {} }, Blob, ArrayBuffer, DataView, AbortController,
+    fetch: () => new Promise(resolve => { resolveRequest = resolve; }),
+  });
+  vm.runInContext(fs.readFileSync(new URL('../public/media.js', import.meta.url), 'utf8'), context);
+  const media = context.window.createChatMedia({ onChange() {}, onTranscript() {}, notify() {} });
+  const request = media.speak('hello', { setAttribute() {}, classList: { toggle() {} } });
+  media.stopSpeech();
+  resolveRequest(new Response(streamingWav(), { headers: { 'Content-Type': 'audio/wav' } }));
+  await request;
+  assert.equal(played, 0); assert.equal(closed, 1);
+});
