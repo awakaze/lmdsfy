@@ -19,7 +19,6 @@ body { overflow: hidden; }
 .model-pill { margin-right: auto; padding-left: 0; cursor: default; font-size: 18px; color: var(--text); }
 .model-pill svg { display: none; }
 .top-actions { display: flex; align-items: center; gap: 4px; }
-.top-actions a { text-decoration: none; font-size: 12px; color: var(--text-tertiary); }
 .icon-btn { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 20px; }
 .icon-btn:hover { background: var(--bg-hover); }
 .icon-btn:disabled { opacity: .4; cursor: not-allowed; }
@@ -82,7 +81,6 @@ body { overflow: hidden; }
 }
 @media (max-width: 560px) {
   .topbar { padding: 0 12px; }
-  .top-actions a { font-size: 11px; padding: 0 6px; }
   .main.empty { padding-bottom: 12vh; }
   .welcome h1 { font-size: 20px; }
   .chat-inner { margin: 0 18px; padding-left: 0; padding-right: 0; }
